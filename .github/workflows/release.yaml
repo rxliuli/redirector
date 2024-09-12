@@ -1,0 +1,72 @@
+env:
+  DIRECTORY: .output
+  PROJECT_NAME: redirector
+
+name: Release
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  Version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      version_changed: ${{ steps.check_version.outputs.version_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for version change
+        id: check_version
+        run: |
+          if git diff --name-only HEAD~1..HEAD | grep -q '^package\.json$'; then
+            VERSION_CHANGED=1
+          else
+            VERSION_CHANGED=0
+          fi
+          echo "version_changed=$VERSION_CHANGED" >> "$GITHUB_OUTPUT"
+      - name: Get version
+        if: ${{ steps.check_version.outputs.version_changed == '1' }}
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  Submit:
+    permissions:
+      contents: write
+    needs: Version
+    if: ${{ needs.Version.outputs.version_changed == '1' }}
+    environment: Publish Extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 'latest'
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Zip extensions
+        run: |
+          pnpm run zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 'v${{ needs.Version.outputs.version }}'
+          name: 'v${{ needs.Version.outputs.version }}'
+          draft: false
+          prerelease: false
+          files: |
+            ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-chrome.zip
+            # ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-firefox.zip
+            # ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-sources.zip

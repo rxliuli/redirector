@@ -1,0 +1,38 @@
+{
+  "name": "redirector",
+  "description": "Dynamic URL Redirector",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "@tsconfig/svelte": "^5.0.4",
+    "@wxt-dev/module-svelte": "^1.0.0",
+    "autoprefixer": "^10.4.20",
+    "svelte": "^4.2.18",
+    "svelte-check": "^3.8.4",
+    "tailwindcss": "^3.4.9",
+    "tslib": "^2.6.3",
+    "typescript": "^5.5.4",
+    "wxt": "^0.19.1"
+  },
+  "dependencies": {
+    "bits-ui": "^0.21.13",
+    "clsx": "^2.1.1",
+    "lucide-svelte": "^0.440.0",
+    "mode-watcher": "^0.4.1",
+    "svelte-headless-table": "^0.18.2",
+    "tailwind-merge": "^2.5.2",
+    "tailwind-variants": "^0.2.1",
+    "tailwindcss-animate": "^1.0.7"
+  }
+}
