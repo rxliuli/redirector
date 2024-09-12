@@ -1,13 +1,4 @@
-function isMatch(from: string, url: string): boolean {
-  let regex: RegExp
-  try {
-    regex = new RegExp(from, 'ig')
-  } catch (error) {
-    console.error('Invalid regex', from, error)
-    return false
-  }
-  return regex.test(url)
-}
+import { isMatch, replaceUrl } from '$lib/url'
 
 export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id })
@@ -40,10 +31,7 @@ export default defineBackground(() => {
       return
     }
     console.log('Redirecting to', rule.to)
-    const redirectUrl = details.url.replace(
-      new RegExp(rule.from, 'ig'),
-      rule.to,
-    )
+    const redirectUrl = replaceUrl(details.url, rule.from, rule.to)
     if (redirectUrl === details.url) {
       return
     }

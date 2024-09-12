@@ -4,6 +4,7 @@
   import { Label } from '$lib/components/ui/label'
   import { ArrowRightIcon } from 'lucide-svelte'
   import { rules } from '../store'
+  import { isMatch, replaceUrl } from '$lib/url'
 
   let from = ''
   let to = ''
@@ -22,11 +23,10 @@
   }
 
   $: {
-    if (from && to && origin) {
-      const regex = new RegExp(from.trim(), 'ig')
+    if (from && to && origin && isMatch(from.trim(), origin)) {
       redirect = {
-        match: regex.test(origin),
-        to: origin.replace(regex, to.trim()),
+        match: true,
+        to: replaceUrl(origin, from.trim(), to.trim()),
       }
     } else {
       redirect = {
