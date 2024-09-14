@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.4",
+    "@types/lodash-es": "^4.17.12",
     "@wxt-dev/module-svelte": "^1.0.0",
     "autoprefixer": "^10.4.20",
     "svelte": "^4.2.18",
@@ -28,10 +29,12 @@
   "dependencies": {
     "bits-ui": "^0.21.13",
     "clsx": "^2.1.1",
+    "lodash-es": "^4.17.21",
     "lucide-svelte": "^0.440.0",
     "mode-watcher": "^0.4.1",
     "svelte-headless-table": "^0.18.2",
     "svelte-radix": "^1.1.1",
+    "svelte-sonner": "^0.3.28",
     "tailwind-merge": "^2.5.2",
     "tailwind-variants": "^0.2.1",
     "tailwindcss-animate": "^1.0.7"

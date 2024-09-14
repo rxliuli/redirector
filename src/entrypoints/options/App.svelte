@@ -11,10 +11,11 @@
   import { StarIcon } from 'lucide-svelte'
   import DarkMode from './components/DarkMode.svelte'
   import { Button } from '$lib/components/ui/button'
+  import { Toaster } from '$lib/components/ui/sonner'
 </script>
 
 <Card class="container my-8">
-  <CardHeader>
+  <CardHeader class="pb-4">
     <CardTitle class="flex items-center gap-2">
       <span class="text-xl font-bold mr-auto">Redirector</span>
       <DarkMode />
@@ -33,6 +34,7 @@
   </CardContent>
 </Card>
 <ModeWatcher />
+<Toaster richColors />
 
 <style>
 </style>
