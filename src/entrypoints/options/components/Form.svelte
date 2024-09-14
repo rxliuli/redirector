@@ -4,14 +4,15 @@
   import { Label } from '$lib/components/ui/label'
   import { ArrowRightIcon } from 'lucide-svelte'
   import { rules } from '../store'
-  import { isMatch, replaceUrl } from '$lib/url'
+  import { matchRule } from '$lib/url'
+  import type { MatchResult } from '$lib/url'
 
   let from = ''
   let to = ''
   let origin = ''
-  let redirect = {
+  let redirect: MatchResult = {
     match: false,
-    to: '',
+    url: '',
   }
 
   function addRedirect() {
@@ -23,15 +24,15 @@
   }
 
   $: {
-    if (from && to && origin && isMatch(from.trim(), origin)) {
-      redirect = {
-        match: true,
-        to: replaceUrl(origin, from.trim(), to.trim()),
-      }
-    } else {
-      redirect = {
-        match: false,
-        to: '',
+    redirect = {
+      match: false,
+      url: '',
+    }
+    if (from && to && origin) {
+      const r = matchRule({ from: from.trim(), to: to.trim() }, origin.trim())
+      console.log(from, origin, to, r)
+      if (r.match) {
+        redirect = r
       }
     }
   }
@@ -74,7 +75,7 @@
   <p class="text-sm break-all">
     Redirect URL:
     {#if redirect.match}
-      <span class="text-green-600 font-semibold">{redirect.to}</span>
+      <span class="text-green-600 font-semibold">{redirect.url}</span>
     {:else}
       <span class="text-yellow-600 font-semibold">No match</span>
     {/if}

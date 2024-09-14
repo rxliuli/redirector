@@ -1,4 +1,4 @@
-import { isMatch, replaceUrl } from '$lib/url'
+import { matchRule } from '$lib/url'
 
 export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id })
@@ -25,13 +25,13 @@ export default defineBackground(() => {
     if (details.parentFrameId !== -1) {
       return
     }
-    const rule = rules.find((rule) => isMatch(rule.from, details.url))
+    const rule = rules.find((rule) => matchRule(rule, details.url).match)
     console.log('Before navigate', details.url, rule)
     if (!rule) {
       return
     }
     console.log('Redirecting to', rule.to)
-    const redirectUrl = replaceUrl(details.url, rule.from, rule.to)
+    const redirectUrl = matchRule(rule, details.url).url
     if (redirectUrl === details.url) {
       return
     }

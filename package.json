@@ -24,6 +24,7 @@
     "tailwindcss": "^3.4.9",
     "tslib": "^2.6.3",
     "typescript": "^5.5.4",
+    "vitest": "^2.1.1",
     "wxt": "^0.19.1"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "clsx": "^2.1.1",
     "lodash-es": "^4.17.21",
     "lucide-svelte": "^0.440.0",
+    "minimatch": "^10.0.1",
     "mode-watcher": "^0.4.1",
     "svelte-headless-table": "^0.18.2",
     "svelte-radix": "^1.1.1",

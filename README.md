@@ -28,9 +28,17 @@ Install from the Chrome Web Store.
 
 ## Example Rule
 
+Regular expression is a powerful tool for matching URL patterns. Here are some examples:
+
 - Redirect Google search to DuckDuckGo:
   - From: `^https://www.google.com/search\?q=(.*?)&.*$`
   - To: `https://duckduckgo.com/?q=$1`
+
+Glob pattern is a simple pattern matching tool. Here are some examples:
+
+- Redirect all YouTube videos to a specific page:
+  - From: `https://youtu.be/*`
+  - To: `https://example.com/watch?v=$1`
 
 ## Privacy
 
