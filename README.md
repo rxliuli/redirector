@@ -34,7 +34,15 @@ Regular expression is a powerful tool for matching URL patterns. Here are some e
   - From: `^https://www.google.com/search\?q=(.*?)&.*$`
   - To: `https://duckduckgo.com/?q=$1`
 
-Glob pattern is a simple pattern matching tool. Here are some examples:
+URLPattern is a more powerful and flexible tool for matching URL patterns. Here are some examples:
+
+- Redirect Google search to DuckDuckGo:
+  - From: `^https://www.google.com/search?q=:id`
+  - To: `https://duckduckgo.com/?q={{search.groups.id}}`
+
+Reference: <https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/URLPattern>
+
+~~Glob pattern is a simple pattern matching tool. Here are some examples:~~
 
 - Redirect all YouTube videos to a specific page:
   - From: `https://youtu.be/*`

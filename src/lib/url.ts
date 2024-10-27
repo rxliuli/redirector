@@ -1,3 +1,6 @@
+import Mustache from 'mustache'
+import 'urlpattern-polyfill'
+
 export interface MatchResult {
   match: boolean
   url: string
@@ -19,6 +22,9 @@ function isRegexMatch(from: string, to: string, url: string): MatchResult {
 }
 
 function isGlobMatch(from: string, to: string, url: string): MatchResult {
+  if (!from.includes('*')) {
+    return { match: false, url: url }
+  }
   const regex = new RegExp(
     from
       .replace(/[.+^${}()|[\]\\]/g, '\\$&')
@@ -41,6 +47,19 @@ function isGlobMatch(from: string, to: string, url: string): MatchResult {
   return { match: false, url: url }
 }
 
+function isURLPatternMatch(
+  pattern: string,
+  to: string,
+  url: string,
+): MatchResult {
+  const r = new URLPattern(pattern)
+  Mustache.escape = (t) => t
+  if (r.test(url)) {
+    return { match: true, url: Mustache.render(to, r.exec(url)) }
+  }
+  return { match: false, url: url }
+}
+
 export function matchRule(
   rule: {
     from: string
@@ -48,9 +67,14 @@ export function matchRule(
   },
   url: string,
 ): MatchResult {
-  const r = isGlobMatch(rule.from, rule.to, url)
-  if (r.match) {
-    return r
+  const list = [isURLPatternMatch, isRegexMatch]
+  for (const fn of list) {
+    try {
+      const r = fn(rule.from, rule.to, url)
+      if (r.match) {
+        return r
+      }
+    } catch {}
   }
-  return isRegexMatch(rule.from, rule.to, url)
+  return { match: false, url: url }
 }
