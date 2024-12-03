@@ -56,7 +56,16 @@ function isURLPatternMatch(rule: MatchRule, url: string): MatchResult {
   const r = new URLPattern(rule.from)
   Mustache.escape = (t) => t
   if (r.test(url)) {
-    return { match: true, url: Mustache.render(rule.to, r.exec(url)) }
+    const matched = r.exec(url)
+    if (matched?.search.groups) {
+      Object.keys(matched?.search.groups).forEach((k) => {
+        const value = matched?.search.groups[k]
+        if (value) {
+          matched.search.groups[k] = decodeURIComponent(value)
+        }
+      })
+    }
+    return { match: true, url: Mustache.render(rule.to, matched) }
   }
   return { match: false, url: url }
 }

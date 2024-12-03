@@ -159,4 +159,37 @@ describe('should using url params', () => {
       url: 'https://archiveofourown.org/works/46606894',
     })
   })
+  it('decode url', () => {
+    const rule: MatchRule = {
+      from: 'https://link.zhihu.com/?target=:url',
+      to: '{{search.groups.url}}',
+    }
+    expect(
+      matchRule(
+        rule,
+        'https://link.zhihu.com/?target=https%3A//www.fanfiction.net/s/7406866/1/To-the-Stars',
+      ),
+    ).toEqual({
+      match: true,
+      url: 'https://www.fanfiction.net/s/7406866/1/To-the-Stars',
+    })
+  })
+  it('nested url', () => {
+    const rule: MatchRule = {
+      from: 'https://www.google.com/url?q=:url&*',
+      to: '{{search.groups.url}}',
+    }
+    let url =
+      'https://www.google.com/url?q=https://www.google.com/url?q%3Dhttps://archiveofourown.org/works/46606894%26amp;sa%3DD%26amp;source%3Deditors%26amp;ust%3D1730032801876547%26amp;usg%3DAOvVaw1sQgvzpIHgk4ky36GUr0Qg&sa=D&source=docs&ust=1730032804915522&usg=AOvVaw0EzJyyDgDMcHFs2nxdHMBo'
+
+    expect(matchRule(rule, url)).toEqual({
+      match: true,
+      url: new URL(url).searchParams.get('q'),
+    })
+    url = new URL(url).searchParams.get('q')!
+    expect(matchRule(rule, url)).toEqual({
+      match: true,
+      url: new URL(url).searchParams.get('q'),
+    })
+  })
 })
