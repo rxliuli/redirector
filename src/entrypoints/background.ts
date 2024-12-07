@@ -21,24 +21,25 @@ export default defineBackground(() => {
     }
   })
 
-  browser.webNavigation.onBeforeNavigate.addListener(async (details) => {
-    if (details.parentFrameId !== -1) {
-      return
-    }
-    const rule = rules.find((rule) => matchRule(rule, details.url).match)
-    console.log('Before navigate', details.url, rule)
-    if (!rule) {
-      return
-    }
-    console.log('Redirecting to', rule.to)
-    const redirectUrl = matchRule(rule, details.url).url
-    if (redirectUrl === details.url) {
-      return
-    }
-    await browser.tabs.update(details.tabId, {
-      url: redirectUrl,
-    })
-  })
+  browser.webRequest.onBeforeRequest.addListener(
+    async (details) => {
+      // console.log('[webRequest] Before request', details)
+      const rule = rules.find((rule) => matchRule(rule, details.url).match)
+      if (!rule) {
+        return {}
+      }
+      const redirectUrl = matchRule(rule, details.url).url
+      if (redirectUrl === details.url) {
+        return {}
+      }
+      console.log('[webRequest] Redirecting to', rule.to, redirectUrl)
+      await browser.tabs.update(details.tabId, {
+        url: redirectUrl,
+      })
+      return {}
+    },
+    { urls: ['<all_urls>'], types: ['main_frame'] },
+  )
 
   browser.action.onClicked.addListener(async (tab) => {
     console.log('Action clicked', tab)
