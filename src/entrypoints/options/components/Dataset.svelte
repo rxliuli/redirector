@@ -1,7 +1,8 @@
 <script lang="ts">
   import { rules } from '../store'
   import { Button } from '$lib/components/ui/button'
-  import { TrashIcon } from 'lucide-svelte'
+  import { Input } from '$lib/components/ui/input';
+  import { CheckIcon, EditIcon, TrashIcon } from 'lucide-svelte'
   import {
     Table,
     TableBody,
@@ -12,6 +13,16 @@
   } from '$lib/components/ui/table'
   import { uniqBy } from 'lodash-es'
   import { toast } from 'svelte-sonner'
+
+  let edit: null | number = null
+
+  function changeEdit(index: number) {
+    if (edit === index) {
+      edit = null
+    } else {
+      edit = index
+    }
+  }
 
   function deleteRule(index: number) {
     $rules = $rules.filter((_, i) => i !== index)
@@ -64,9 +75,40 @@
   <TableBody>
     {#each $rules as rule, index (index)}
       <TableRow>
-        <TableCell>{rule.from}</TableCell>
-        <TableCell>{rule.to}</TableCell>
-        <TableCell class="text-right">
+        <TableCell>
+          {#if edit === index}
+            <Input
+              type="text"
+              class="w-full"
+              bind:value={rule.from}
+            />
+          {:else}
+            {rule.from}
+          {/if}
+        </TableCell>
+        <TableCell>
+          {#if edit === index}
+            <Input
+              type="text"
+              class="w-full"
+              bind:value={rule.to}
+            />
+          {:else}
+            {rule.to}
+          {/if}
+        </TableCell>
+        <TableCell class="text-right space-x-2">
+          <Button
+            variant="default"
+            size="icon"
+            on:click={() => changeEdit(index)}
+          >
+            {#if edit === index}
+              <CheckIcon class="h-4 w-4" />
+            {:else}
+              <EditIcon class="h-4 w-4" />
+            {/if}
+          </Button>
           <Button
             variant="destructive"
             size="icon"
