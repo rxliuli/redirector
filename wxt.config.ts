@@ -10,7 +10,7 @@ export default defineConfig({
   },
   manifest: {
     name: 'Redirector',
-    permissions: ['storage', 'tabs', 'webRequest'],
+    permissions: ['storage', 'tabs', 'webRequest', 'webNavigation'],
     host_permissions: ['<all_urls>'],
     action: {
       default_icon: {

@@ -1,8 +1,6 @@
 import { matchRule } from '$lib/url'
 
 export default defineBackground(() => {
-  console.log('Hello background!', { id: browser.runtime.id })
-
   interface Rule {
     from: string
     to: string
@@ -21,28 +19,58 @@ export default defineBackground(() => {
     }
   })
 
+  const extensionRedirects = new Map<number, boolean>()
+  const redirectCounts = new Map<number, number>()
+
   browser.webRequest.onBeforeRequest.addListener(
     async (details) => {
-      // console.log('[webRequest] Before request', details)
+      if (details.tabId === -1) {
+        return {}
+      }
       const rule = rules.find((rule) => matchRule(rule, details.url).match)
       if (!rule) {
         return {}
+      }
+      const currentCount = redirectCounts.get(details.tabId) ?? 0
+      if (currentCount >= 5) {
+        console.error(
+          `Circular redirect detection: tab ${
+            details.url
+          } has reached the maximum number of redirects, rule: ${JSON.stringify(
+            rule,
+          )}`,
+        )
+        return { cancel: true }
       }
       const redirectUrl = matchRule(rule, details.url).url
       if (redirectUrl === details.url) {
         return {}
       }
       console.log('[webRequest] Redirecting to', rule.to, redirectUrl)
+      redirectCounts.set(details.tabId, currentCount + 1)
+      extensionRedirects.set(details.tabId, true)
       await browser.tabs.update(details.tabId, {
         url: redirectUrl,
       })
-      return {}
+      return { cancel: true }
     },
     { urls: ['<all_urls>'], types: ['main_frame'] },
   )
-
+  browser.tabs.onRemoved.addListener((tabId) => {
+    extensionRedirects.delete(tabId)
+    redirectCounts.delete(tabId)
+  })
+  browser.webNavigation.onCommitted.addListener((details) => {
+    if (details.frameId === 0) {
+      const tabId = details.tabId
+      if (extensionRedirects.has(tabId)) {
+        extensionRedirects.delete(tabId)
+      } else {
+        redirectCounts.set(tabId, 0)
+      }
+    }
+  })
   browser.action.onClicked.addListener(async (tab) => {
-    console.log('Action clicked', tab)
     await browser.tabs.create({
       url: browser.runtime.getURL('/options.html'),
     })
