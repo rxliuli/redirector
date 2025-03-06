@@ -33,43 +33,12 @@ describe('regex match', () => {
   })
 })
 
-describe.skip('glob match', () => {
-  it('should match rule', () => {
-    expect(
-      matchRule(
-        {
-          from: 'https://duckduckgo.com/?*&q=*&*',
-          to: 'https://www.google.com/search?q=$2',
-        },
-        'https://duckduckgo.com/?t=h_&q=js&ia=web',
-      ),
-    ).toEqual({
-      match: true,
-      url: 'https://www.google.com/search?q=js',
-    })
-  })
-  it('should not match rule', () => {
-    expect(
-      matchRule(
-        {
-          from: 'https://duckduckgo.com/?*&q=*&*',
-          to: 'https://www.google.com/search?q=$2',
-        },
-        'https://duckduckgo.com/?q=js&ia=web',
-      ),
-    ).toEqual({
-      match: false,
-      url: 'https://duckduckgo.com/?q=js&ia=web',
-    })
-  })
-})
-
-describe.skip('match real rule', () => {
+describe('match real rule', () => {
   it('youtube', () => {
     expect(
       matchRule(
         {
-          from: 'https://youtu.be/*',
+          from: 'https://youtu.be/(.*)',
           to: 'https://www.youtube.com/watch?v=$1',
         },
         'https://youtu.be/sRHOrI59tRQ',
@@ -190,6 +159,36 @@ describe('should using url params', () => {
     expect(matchRule(rule, url)).toEqual({
       match: true,
       url: new URL(url).searchParams.get('q'),
+    })
+  })
+  it('regex match first', () => {
+    const rule: MatchRule = {
+      from: 'https://www.bilibili.com/video/(.+?)\\?',
+      to: 'https://www.bilibili.com/video/$1',
+    }
+    expect(
+      matchRule(rule, 'https://www.bilibili.com/video/BV1Qy4y1o71y?test=123'),
+    ).toEqual({
+      match: true,
+      url: 'https://www.bilibili.com/video/BV1Qy4y1o71y',
+    })
+    expect(
+      matchRule(rule, 'https://www.bilibili.com/video/BV1Qy4y1o71y'),
+    ).toEqual({
+      match: true,
+      url: 'https://www.bilibili.com/video/$1',
+    })
+    expect(
+      matchRule(
+        {
+          ...rule,
+          mode: 'regex',
+        },
+        'https://www.bilibili.com/video/BV1Qy4y1o71y',
+      ),
+    ).toEqual({
+      match: false,
+      url: 'https://www.bilibili.com/video/BV1Qy4y1o71y',
     })
   })
 })

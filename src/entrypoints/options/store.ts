@@ -1,9 +1,5 @@
+import { MatchRule } from '$lib/url'
 import { writable } from 'svelte/store'
-
-export interface Rule {
-  from: string
-  to: string
-}
 
 function createSyncStorage<T>(key: string, initialValue: T) {
   const { subscribe, set, update } = writable<T>(initialValue, () => {
@@ -25,4 +21,4 @@ function createSyncStorage<T>(key: string, initialValue: T) {
   }
 }
 
-export const rules = createSyncStorage<Rule[]>('rules', [])
+export const rules = createSyncStorage<MatchRule[]>('rules', [])

@@ -46,7 +46,15 @@ export default defineBackground(() => {
       if (redirectUrl === details.url) {
         return {}
       }
-      console.log('[webRequest] Redirecting to', rule.to, redirectUrl)
+
+      console.log(
+        '[webRequest] Redirecting from',
+        details.url,
+        'to',
+        rule.to,
+        'redirectUrl',
+        redirectUrl,
+      )
       redirectCounts.set(details.tabId, currentCount + 1)
       extensionRedirects.set(details.tabId, true)
       await browser.tabs.update(details.tabId, {

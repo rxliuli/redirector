@@ -4,11 +4,20 @@ import 'urlpattern-polyfill'
 export interface MatchRule {
   from: string
   to: string
+  mode?: 'regex' | 'url-pattern'
 }
 
 export interface MatchResult {
   match: boolean
   url: string
+}
+
+function enhancedReplace(match: RegExpExecArray, replacement: string) {
+  let replaced = replacement
+  for (let i = 1; i < match.length; i++) {
+    replaced = replaced.replaceAll('$' + i, match[i] ?? '')
+  }
+  return replaced
 }
 
 function isRegexMatch(rule: MatchRule, url: string): MatchResult {
@@ -21,33 +30,7 @@ function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   }
   const r = regex.exec(url)
   if (r) {
-    return { match: true, url: url.replace(regex, rule.to) }
-  }
-  return { match: false, url: url }
-}
-
-function isGlobMatch(rule: MatchRule, url: string): MatchResult {
-  if (!rule.from.includes('*')) {
-    return { match: false, url: url }
-  }
-  const regex = new RegExp(
-    rule.from
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-      .replaceAll('?', '\\?')
-      .replaceAll('*', '(.*)'),
-  )
-  const r = regex.exec(url)
-  if (r) {
-    return {
-      match: true,
-      url: rule.to.replaceAll(/\$(\d+)/g, (_s, p1) => {
-        const i = Number.parseInt(p1)
-        if (r[i]) {
-          return r[i]
-        }
-        return ''
-      }),
-    }
+    return { match: true, url: enhancedReplace(r, rule.to) }
   }
   return { match: false, url: url }
 }
@@ -71,7 +54,12 @@ function isURLPatternMatch(rule: MatchRule, url: string): MatchResult {
 }
 
 export function matchRule(rule: MatchRule, url: string): MatchResult {
-  const list = [isURLPatternMatch, isRegexMatch]
+  const list =
+    rule.mode === 'regex'
+      ? [isRegexMatch]
+      : rule.mode === 'url-pattern'
+      ? [isURLPatternMatch]
+      : [isRegexMatch, isURLPatternMatch]
   for (const fn of list) {
     try {
       const r = fn(rule, url)

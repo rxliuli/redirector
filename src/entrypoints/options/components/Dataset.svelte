@@ -1,7 +1,7 @@
 <script lang="ts">
   import { rules } from '../store'
   import { Button } from '$lib/components/ui/button'
-  import { Input } from '$lib/components/ui/input';
+  import { Input } from '$lib/components/ui/input'
   import { CheckIcon, EditIcon, TrashIcon } from 'lucide-svelte'
   import {
     Table,
@@ -13,6 +13,7 @@
   } from '$lib/components/ui/table'
   import { uniqBy } from 'lodash-es'
   import { toast } from 'svelte-sonner'
+  import { SelectGroup } from '$lib/components/extra/select'
 
   let edit: null | number = null
 
@@ -67,6 +68,7 @@
 <Table>
   <TableHeader>
     <TableRow>
+      <TableHead>Mode</TableHead>
       <TableHead>From</TableHead>
       <TableHead>To</TableHead>
       <TableHead class="text-right">Action</TableHead>
@@ -75,48 +77,71 @@
   <TableBody>
     {#each $rules as rule, index (index)}
       <TableRow>
-        <TableCell>
-          {#if edit === index}
-            <Input
-              type="text"
-              class="w-full"
-              bind:value={rule.from}
+        {#if edit === index}
+          <TableCell>
+            <SelectGroup
+              bind:value={rule.mode}
+              options={[
+                { label: 'Regex', value: 'regex' },
+                { label: 'URL Pattern', value: 'url-pattern' },
+              ]}
+              placeholder="Select mode"
+              class="w-36"
             />
-          {:else}
-            {rule.from}
-          {/if}
-        </TableCell>
-        <TableCell>
-          {#if edit === index}
-            <Input
-              type="text"
-              class="w-full"
-              bind:value={rule.to}
-            />
-          {:else}
-            {rule.to}
-          {/if}
-        </TableCell>
-        <TableCell class="text-right space-x-2">
-          <Button
-            variant="default"
-            size="icon"
-            on:click={() => changeEdit(index)}
-          >
-            {#if edit === index}
+          </TableCell>
+          <TableCell>
+            <Input type="text" class="w-full" bind:value={rule.from} />
+          </TableCell>
+          <TableCell>
+            <Input type="text" class="w-full" bind:value={rule.to} />
+          </TableCell>
+          <TableCell class="flex gap-2">
+            <Button
+              variant="default"
+              size="icon"
+              on:click={() => changeEdit(index)}
+            >
               <CheckIcon class="h-4 w-4" />
-            {:else}
+            </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              on:click={() => deleteRule(index)}
+            >
+              <TrashIcon class="h-4 w-4" />
+            </Button>
+          </TableCell>
+        {:else}
+          <TableCell>
+            {rule.mode === 'regex'
+              ? 'Regex'
+              : rule.mode === 'url-pattern'
+                ? 'URL Pattern'
+                : 'Auto'}
+          </TableCell>
+          <TableCell>
+            {rule.from}
+          </TableCell>
+          <TableCell>
+            {rule.to}
+          </TableCell>
+          <TableCell class="flex gap-2">
+            <Button
+              variant="default"
+              size="icon"
+              on:click={() => changeEdit(index)}
+            >
               <EditIcon class="h-4 w-4" />
-            {/if}
-          </Button>
-          <Button
-            variant="destructive"
-            size="icon"
-            on:click={() => deleteRule(index)}
-          >
-            <TrashIcon class="h-4 w-4" />
-          </Button>
-        </TableCell>
+            </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              on:click={() => deleteRule(index)}
+            >
+              <TrashIcon class="h-4 w-4" />
+            </Button>
+          </TableCell>
+        {/if}
       </TableRow>
     {/each}
   </TableBody>
