@@ -8,20 +8,20 @@
   import { ModeWatcher } from 'mode-watcher'
   import Dataset from './components/Dataset.svelte'
   import Form from './components/Form.svelte'
-  import { StarIcon } from 'lucide-svelte'
+  import { GithubIcon } from 'lucide-svelte'
   import DarkMode from './components/DarkMode.svelte'
   import { Button } from '$lib/components/ui/button'
   import { Toaster } from '$lib/components/ui/sonner'
 </script>
 
-<Card class="container my-8">
+<Card class="container my-8 p-0 md:p-8 border-none">
   <CardHeader class="pb-4">
     <CardTitle class="flex items-center gap-2">
       <span class="text-xl font-bold mr-auto">Redirector</span>
       <DarkMode />
       <a href="https://github.com/rxliuli/redirector" target="_blank">
         <Button variant="outline" size="icon">
-          <StarIcon
+          <GithubIcon
             class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all text-yellow-500"
           />
         </Button>
