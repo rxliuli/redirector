@@ -101,6 +101,21 @@ export default defineBackground(() => {
       }
     }
   })
+  browser.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
+    if (details.tabId === -1) {
+      return
+    }
+    const { redirectUrl, cancel } = getRedirectUrl(details.tabId, details.url)
+    if (cancel) {
+      return
+    }
+    if (!redirectUrl) {
+      return
+    }
+    await browser.tabs.update(details.tabId, {
+      url: redirectUrl,
+    })
+  })
   browser.action.onClicked.addListener(async (tab) => {
     await browser.tabs.create({
       url: browser.runtime.getURL('/options.html'),

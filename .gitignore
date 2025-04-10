@@ -14,6 +14,8 @@ stats-*.json
 .wxt
 web-ext.config.ts
 URL Redirector */
+URL Redirector
+Redirector
 
 # Editor directories and files
 .vscode/*
