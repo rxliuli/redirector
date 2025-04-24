@@ -1,5 +1,7 @@
 # Redirector
 
+[Chrome](https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin), [Safari](https://apps.apple.com/cn/app/url-redirector/id6743197230), [Edge](https://microsoftedge.microsoft.com/addons/detail/redirector/jhdjcofnjfeljeekjklhgfmfocfgibmm)
+
 ## Introduction
 
 Redirector is a powerful and flexible browser extension that allows users to customize URL redirection rules. Using regular expressions, users can create complex redirection rules applicable to various websites and URL patterns.
