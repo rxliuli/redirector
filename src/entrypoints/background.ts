@@ -67,10 +67,12 @@ export default defineBackground(() => {
       if (!redirectUrl) {
         return {}
       }
+      new Promise((resolve) => setTimeout(resolve, 10)).then(async () => {
       await browser.tabs.update(details.tabId, {
         url: redirectUrl,
       })
-      return { cancel: true }
+      })
+      return { cancel: true, redirectUrl }
     },
     { urls: ['<all_urls>'], types: ['main_frame'] },
   )
