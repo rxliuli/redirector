@@ -20,15 +20,21 @@ export default defineBackground(() => {
   })
 
   const extensionRedirects = new Map<number, boolean>()
-  const redirectCounts = new Map<number, number>()
+  const redirectCounts = new Map<
+    number,
+    {
+      count: number
+      lastTime: number
+    }
+  >()
 
   function getRedirectUrl(tabId: number, url: string) {
     const rule = rules.find((rule) => matchRule(rule, url).match)
     if (!rule) {
       return {}
     }
-    const currentCount = redirectCounts.get(tabId) ?? 0
-    if (currentCount >= 5) {
+    const currentCount = redirectCounts.get(tabId) ?? { count: 0, lastTime: 0 }
+    if (currentCount.count >= 5 && Date.now() - currentCount.lastTime < 3000) {
       console.error(
         `Circular redirect detection: tab ${url} has reached the maximum number of redirects, rule: ${JSON.stringify(
           rule,
@@ -49,7 +55,10 @@ export default defineBackground(() => {
       'redirectUrl',
       redirectUrl,
     )
-    redirectCounts.set(tabId, currentCount + 1)
+    redirectCounts.set(tabId, {
+      lastTime: Date.now(),
+      count: currentCount.count + 1,
+    })
     extensionRedirects.set(tabId, true)
     return { redirectUrl }
   }
@@ -68,9 +77,9 @@ export default defineBackground(() => {
         return {}
       }
       new Promise((resolve) => setTimeout(resolve, 10)).then(async () => {
-      await browser.tabs.update(details.tabId, {
-        url: redirectUrl,
-      })
+        await browser.tabs.update(details.tabId, {
+          url: redirectUrl,
+        })
       })
       return { cancel: true, redirectUrl }
     },
@@ -86,7 +95,10 @@ export default defineBackground(() => {
       if (extensionRedirects.has(tabId)) {
         extensionRedirects.delete(tabId)
       } else {
-        redirectCounts.set(tabId, 0)
+        redirectCounts.set(tabId, {
+          count: 0,
+          lastTime: Date.now(),
+        })
       }
       // TODO: https://developer.apple.com/forums/thread/727388
       if (import.meta.env.SAFARI) {
@@ -118,7 +130,7 @@ export default defineBackground(() => {
       url: redirectUrl,
     })
   })
-  browser.action.onClicked.addListener(async (tab) => {
+  browser.action.onClicked.addListener(async () => {
     await browser.tabs.create({
       url: browser.runtime.getURL('/options.html'),
     })
