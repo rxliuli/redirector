@@ -9,20 +9,30 @@ export default defineConfig({
   runner: {
     disabled: true,
   },
-  manifest: (config) => ({
-    name: config.browser === 'safari' ? 'URL Redirector' : 'Redirector',
-    permissions: ['storage', 'tabs', 'webRequest', 'webNavigation'],
-    host_permissions: ['<all_urls>'],
-    action: {
-      default_icon: {
-        '16': 'icon/16.png',
-        '32': 'icon/32.png',
-        '48': 'icon/48.png',
-        '96': 'icon/96.png',
-        '128': 'icon/128.png',
+  manifest: (env) => {
+    const manifest = {
+      name: 'Redirector',
+      permissions: ['storage', 'tabs', 'webRequest', 'webNavigation'],
+      host_permissions: ['<all_urls>'],
+      action: {
+        default_icon: {
+          '16': 'icon/16.png',
+          '32': 'icon/32.png',
+          '48': 'icon/48.png',
+          '96': 'icon/96.png',
+          '128': 'icon/128.png',
+        },
       },
-    },
-  }),
+    }
+    if (env.browser === 'safari') {
+      manifest.name = 'URL Redirector'
+      // TODO: https://developer.apple.com/forums/thread/735111
+      manifest.permissions = manifest.permissions.filter(
+        (permission) => permission !== 'webRequest',
+      )
+    }
+    return manifest
+  },
   vite: () => ({
     resolve: {
       alias: {

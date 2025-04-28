@@ -11,7 +11,7 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
-    "zip:safari": "wxt build -b safari && xcrun safari-web-extension-converter --project-location 'URL Redirector 2025-03-14' --bundle-identifier com.rxliuli.url-redirector --force .output/safari-mv3",
+    "build:safari": "vite-node src/lib/build/build-safari.ts",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "postinstall": "wxt prepare",
     "test": "vitest run"
@@ -23,14 +23,17 @@
     "@types/mustache": "^4.2.5",
     "@wxt-dev/module-svelte": "^1.0.1",
     "autoprefixer": "^10.4.20",
+    "dotenv": "^16.5.0",
     "hono": "^4.6.20",
     "svelte": "^4.2.19",
     "svelte-check": "^3.8.6",
     "tailwindcss": "^3.4.11",
     "tslib": "^2.7.0",
     "typescript": "^5.6.2",
+    "vite-node": "^3.1.2",
     "vitest": "^2.1.1",
-    "wxt": "^0.19.9"
+    "wxt": "^0.19.9",
+    "zx": "^8.5.3"
   },
   "dependencies": {
     "bits-ui": "^0.21.16",

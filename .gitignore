@@ -16,6 +16,7 @@ web-ext.config.ts
 URL Redirector */
 URL Redirector
 Redirector
+.env.local
 
 # Editor directories and files
 .vscode/*
