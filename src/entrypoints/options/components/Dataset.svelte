@@ -2,6 +2,7 @@
   import { rules } from '../store'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
+	import { Checkbox } from '$lib/components/ui/checkbox';
   import { CheckIcon, EditIcon, TrashIcon } from 'lucide-svelte'
   import {
     Table,
@@ -91,7 +92,11 @@
             />
           </TableCell>
           <TableCell>
-            {!rule.disabled ? 'yes' : 'no'}
+            <Checkbox bind:checked={rule.disabled}>
+              {#if rule.disabled}
+                <CheckIcon class="h-4 w-4" />
+              {/if}
+            </Checkbox>
           </TableCell>
           <TableCell>
             <Input type="text" class="w-full" bind:value={rule.from} />
@@ -124,7 +129,11 @@
                 : 'Auto'}
           </TableCell>
           <TableCell>
-            {!rule.disabled ? 'yes' : 'no'}
+            <Checkbox checked={rule.disabled} disabled>
+              {#if rule.disabled}
+                <CheckIcon class="h-4 w-4" />
+              {/if}
+            </Checkbox>
           </TableCell>
           <TableCell>
             {rule.from}
