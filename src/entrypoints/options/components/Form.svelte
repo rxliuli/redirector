@@ -19,6 +19,7 @@
   let to = ''
   let origin = ''
   let mode: MatchRule['mode'] = 'regex'
+  let enabled: boolean = true
   let redirect: MatchResult = {
     match: false,
     url: '',
@@ -26,7 +27,7 @@
 
   function addRedirect() {
     if (from && to) {
-      $rules = [{ from: from.trim(), to: to.trim(), disabled: false, mode }, ...$rules]
+      $rules = [{ from: from.trim(), to: to.trim(), enabled, mode }, ...$rules]
       from = ''
       to = ''
     }
@@ -39,7 +40,7 @@
     }
     if (from && to && origin) {
       const r = matchRule(
-        { from: from.trim(), to: to.trim(), disabled: false, mode },
+        { from: from.trim(), to: to.trim(), enabled, mode },
         origin.trim(),
       )
       console.log(from, origin, to, r)

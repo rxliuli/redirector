@@ -5,7 +5,7 @@ export interface MatchRule {
   from: string
   to: string
   mode?: 'regex' | 'url-pattern'
-  disabled: boolean
+  enabled: boolean
 }
 
 export interface MatchResult {
@@ -55,7 +55,7 @@ function isURLPatternMatch(rule: MatchRule, url: string): MatchResult {
 }
 
 export function matchRule(rule: MatchRule, url: string): MatchResult {
-  if (rule.disabled) {
+  if (!rule.enabled) {
     return { match: false, url: url }
   }
 
