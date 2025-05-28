@@ -69,6 +69,7 @@
   <TableHeader>
     <TableRow>
       <TableHead>Mode</TableHead>
+      <TableHead>Enabled</TableHead>
       <TableHead>From</TableHead>
       <TableHead>To</TableHead>
       <TableHead class="text-right">Action</TableHead>
@@ -88,6 +89,9 @@
               placeholder="Select mode"
               class="w-36"
             />
+          </TableCell>
+          <TableCell>
+            {!rule.disabled ? 'yes' : 'no'}
           </TableCell>
           <TableCell>
             <Input type="text" class="w-full" bind:value={rule.from} />
@@ -118,6 +122,9 @@
               : rule.mode === 'url-pattern'
                 ? 'URL Pattern'
                 : 'Auto'}
+          </TableCell>
+          <TableCell>
+            {!rule.disabled ? 'yes' : 'no'}
           </TableCell>
           <TableCell>
             {rule.from}

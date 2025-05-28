@@ -26,7 +26,7 @@
 
   function addRedirect() {
     if (from && to) {
-      $rules = [{ from: from.trim(), to: to.trim(), mode }, ...$rules]
+      $rules = [{ from: from.trim(), to: to.trim(), disabled: false, mode }, ...$rules]
       from = ''
       to = ''
     }
@@ -39,7 +39,7 @@
     }
     if (from && to && origin) {
       const r = matchRule(
-        { from: from.trim(), to: to.trim(), mode },
+        { from: from.trim(), to: to.trim(), disabled: false, mode },
         origin.trim(),
       )
       console.log(from, origin, to, r)
