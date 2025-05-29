@@ -8,6 +8,7 @@ describe('regex match', () => {
         {
           from: '^https://duckduckgo.com/\\?.*&q=(.*?)(&.*)?$',
           to: 'https://www.google.com/search?q=$1',
+          enabled: true
         },
         'https://duckduckgo.com/?t=h_&q=js&ia=web',
       ),
@@ -23,6 +24,7 @@ describe('regex match', () => {
         {
           from: '^https://duckduckgo.com/\\?.*&q=(.*?)(&.*)?$',
           to: 'https://www.google.com/search?q=$1',
+          enabled: true
         },
         'https://duckduckgo.com/?q=js&ia=web',
       ),
@@ -40,6 +42,7 @@ describe('match real rule', () => {
         {
           from: 'https://youtu.be/(.*)',
           to: 'https://www.youtube.com/watch?v=$1',
+          enabled: true
         },
         'https://youtu.be/sRHOrI59tRQ',
       ),
@@ -57,6 +60,7 @@ describe('should using url params', () => {
         {
           from: 'https://youtu.be/:id',
           to: 'https://www.youtube.com/watch?v={{pathname.groups.id}}',
+          enabled: true,
         },
         'https://youtu.be/sRHOrI59tRQ',
       ),
@@ -71,6 +75,7 @@ describe('should using url params', () => {
         {
           from: 'https://www.google.com/url?q=:url&(.*)',
           to: '{{search.groups.url}}',
+          enabled: true,
         },
         'https://www.google.com/url?q=https://archiveofourown.org/works/46606894&amp;sa=D&amp;source=editors&amp;ust=1730028678389922&amp;usg=AOvVaw0bnG9SKYDnSYYyEmj-X1c-',
       ),
@@ -85,6 +90,7 @@ describe('should using url params', () => {
         {
           from: 'https://duckduckgo.com/?*&q=:id&*',
           to: 'https://www.google.com/search?q={{search.groups.id}}',
+          enabled: true,
         },
         'https://duckduckgo.com/?t=h_&q=js&ia=web',
       ),
@@ -99,6 +105,7 @@ describe('should using url params', () => {
         {
           from: 'https://youtu.be/:id',
           to: 'https://www.youtube.com/watch?v={{pathname.groups.id}}',
+          enabled: true,
         },
         'https://youtu.be/sRHOrI59tRQ',
       ),
@@ -111,6 +118,7 @@ describe('should using url params', () => {
     const rule: MatchRule = {
       from: 'https:\\/\\/www.google.com\\/url\\?q=(((?!google.com).)*?)&.*',
       to: '$1',
+      enabled: true,
     }
     expect(
       matchRule(
@@ -132,6 +140,7 @@ describe('should using url params', () => {
     const rule: MatchRule = {
       from: 'https://link.zhihu.com/?target=:url',
       to: '{{search.groups.url}}',
+      enabled: true,
     }
     expect(
       matchRule(
@@ -147,6 +156,7 @@ describe('should using url params', () => {
     const rule: MatchRule = {
       from: 'https://www.google.com/url?q=:url&*',
       to: '{{search.groups.url}}',
+      enabled: true,
     }
     let url =
       'https://www.google.com/url?q=https://www.google.com/url?q%3Dhttps://archiveofourown.org/works/46606894%26amp;sa%3DD%26amp;source%3Deditors%26amp;ust%3D1730032801876547%26amp;usg%3DAOvVaw1sQgvzpIHgk4ky36GUr0Qg&sa=D&source=docs&ust=1730032804915522&usg=AOvVaw0EzJyyDgDMcHFs2nxdHMBo'
@@ -165,6 +175,7 @@ describe('should using url params', () => {
     const rule: MatchRule = {
       from: 'https://www.bilibili.com/video/(.+?)\\?',
       to: 'https://www.bilibili.com/video/$1',
+      enabled: true,
     }
     expect(
       matchRule(rule, 'https://www.bilibili.com/video/BV1Qy4y1o71y?test=123'),
