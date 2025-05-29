@@ -4,6 +4,7 @@ export default defineBackground(() => {
   interface Rule {
     from: string
     to: string
+    enabled: boolean
   }
 
   let rules: Rule[] = []
@@ -27,7 +28,7 @@ export default defineBackground(() => {
   >()
 
   function getRedirectUrl(tabId: number, url: string) {
-    const rule = rules.find((rule) => matchRule(rule, url).match)
+    const rule = rules.filter((rule) => rule.enabled).find((rule) => matchRule(rule, url).match)
     if (!rule) {
       return {}
     }

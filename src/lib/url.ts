@@ -55,10 +55,6 @@ function isURLPatternMatch(rule: MatchRule, url: string): MatchResult {
 }
 
 export function matchRule(rule: MatchRule, url: string): MatchResult {
-  if (!rule.enabled) {
-    return { match: false, url: url }
-  }
-
   const list =
     rule.mode === 'regex'
       ? [isRegexMatch]
