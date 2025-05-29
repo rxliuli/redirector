@@ -93,7 +93,7 @@
           </TableCell>
           <TableCell>
             <Checkbox bind:checked={rule.enabled}>
-              {#if rule.enabled}
+              {#if rule?.enabled ?? true}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
@@ -130,7 +130,7 @@
           </TableCell>
           <TableCell>
             <Checkbox checked={rule.enabled} disabled>
-              {#if rule.enabled}
+              {#if rule?.enabled ?? true}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
