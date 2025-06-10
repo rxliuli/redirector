@@ -18,6 +18,12 @@
 
   let edit: null | number = null
 
+  // retro-compatibility
+  $rules.map((rule) => {
+    rule.enabled = rule.enabled ?? true
+    return rule
+  })
+
   function changeEdit(index: number) {
     if (edit === index) {
       edit = null
@@ -52,6 +58,10 @@
         reader.onload = (e) => {
           const json = JSON.parse(e.target?.result as string)
           $rules = uniqBy([...json, ...$rules], (it) => it.from)
+          $rules.map((rule) => {
+            rule.enabled = rule.enabled ?? true
+            return rule
+          })
           toast.success('Imported rules')
         }
         reader.readAsText(file)
@@ -93,7 +103,7 @@
           </TableCell>
           <TableCell>
             <Checkbox bind:checked={rule.enabled}>
-              {#if rule?.enabled ?? true}
+              {#if rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
@@ -130,7 +140,7 @@
           </TableCell>
           <TableCell>
             <Checkbox checked={rule.enabled} disabled>
-              {#if rule?.enabled ?? true}
+              {#if rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
