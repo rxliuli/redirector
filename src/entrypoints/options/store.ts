@@ -10,8 +10,8 @@ function createSyncStorage<T>(
     browser.storage.sync.get(key).then((result) => {
       set(
         transform
-          ? transform(result[key] || initialValue)
-          : result[key] || initialValue,
+          ? transform(result[key] as T || initialValue)
+          : result[key] as T || initialValue,
       )
     })
   })
