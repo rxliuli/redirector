@@ -2,6 +2,7 @@
   import { rules } from '../store'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
+	import { Checkbox } from '$lib/components/ui/checkbox';
   import { CheckIcon, EditIcon, TrashIcon } from 'lucide-svelte'
   import {
     Table,
@@ -50,7 +51,10 @@
         const reader = new FileReader()
         reader.onload = (e) => {
           const json = JSON.parse(e.target?.result as string)
-          $rules = uniqBy([...json, ...$rules], (it) => it.from)
+          $rules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
+            rule.enabled = rule.enabled ?? true
+            return rule
+          })
           toast.success('Imported rules')
         }
         reader.readAsText(file)
@@ -69,6 +73,7 @@
   <TableHeader>
     <TableRow>
       <TableHead>Mode</TableHead>
+      <TableHead>Enabled</TableHead>
       <TableHead>From</TableHead>
       <TableHead>To</TableHead>
       <TableHead class="text-right">Action</TableHead>
@@ -88,6 +93,13 @@
               placeholder="Select mode"
               class="w-36"
             />
+          </TableCell>
+          <TableCell>
+            <Checkbox bind:checked={rule.enabled}>
+              {#if rule.enabled}
+                <CheckIcon class="h-4 w-4" />
+              {/if}
+            </Checkbox>
           </TableCell>
           <TableCell>
             <Input type="text" class="w-full" bind:value={rule.from} />
@@ -118,6 +130,13 @@
               : rule.mode === 'url-pattern'
                 ? 'URL Pattern'
                 : 'Auto'}
+          </TableCell>
+          <TableCell>
+            <Checkbox checked={rule.enabled} disabled>
+              {#if rule.enabled}
+                <CheckIcon class="h-4 w-4" />
+              {/if}
+            </Checkbox>
           </TableCell>
           <TableCell>
             {rule.from}

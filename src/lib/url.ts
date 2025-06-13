@@ -5,6 +5,7 @@ export interface MatchRule {
   from: string
   to: string
   mode?: 'regex' | 'url-pattern'
+  enabled?: boolean
 }
 
 export interface MatchResult {

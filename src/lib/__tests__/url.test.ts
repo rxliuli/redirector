@@ -8,6 +8,7 @@ describe('regex match', () => {
         {
           from: '^https://duckduckgo.com/\\?.*&q=(.*?)(&.*)?$',
           to: 'https://www.google.com/search?q=$1',
+          enabled: true
         },
         'https://duckduckgo.com/?t=h_&q=js&ia=web',
       ),
@@ -23,6 +24,7 @@ describe('regex match', () => {
         {
           from: '^https://duckduckgo.com/\\?.*&q=(.*?)(&.*)?$',
           to: 'https://www.google.com/search?q=$1',
+          enabled: true
         },
         'https://duckduckgo.com/?q=js&ia=web',
       ),
@@ -40,6 +42,7 @@ describe('match real rule', () => {
         {
           from: 'https://youtu.be/(.*)',
           to: 'https://www.youtube.com/watch?v=$1',
+          enabled: true
         },
         'https://youtu.be/sRHOrI59tRQ',
       ),
