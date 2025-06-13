@@ -18,9 +18,6 @@
 
   let edit: null | number = null
 
-  
-  handleDataRetro()
-
   function changeEdit(index: number) {
     if (edit === index) {
       edit = null
@@ -54,21 +51,16 @@
         const reader = new FileReader()
         reader.onload = (e) => {
           const json = JSON.parse(e.target?.result as string)
-          $rules = uniqBy([...json, ...$rules], (it) => it.from)
-          handleDataRetro()
+          $rules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
+            rule.enabled = rule.enabled ?? true
+            return rule
+          })
           toast.success('Imported rules')
         }
         reader.readAsText(file)
       }
     }
     input.click()
-  }
-
-  function handleDataRetro() {
-    $rules.map((rule) => {
-      rule.enabled = rule.enabled ?? true
-      return rule
-    })
   }
 </script>
 

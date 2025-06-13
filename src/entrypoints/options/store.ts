@@ -1,10 +1,18 @@
 import { MatchRule } from '$lib/url'
 import { writable } from 'svelte/store'
 
-function createSyncStorage<T>(key: string, initialValue: T) {
+function createSyncStorage<T>(
+  key: string,
+  initialValue: T,
+  transform?: (value: T) => T,
+) {
   const { subscribe, set, update } = writable<T>(initialValue, () => {
     browser.storage.sync.get(key).then((result) => {
-      set(result[key] || initialValue)
+      set(
+        transform
+          ? transform(result[key] || initialValue)
+          : result[key] || initialValue,
+      )
     })
   })
 
@@ -21,4 +29,6 @@ function createSyncStorage<T>(key: string, initialValue: T) {
   }
 }
 
-export const rules = createSyncStorage<MatchRule[]>('rules', [])
+export const rules = createSyncStorage<MatchRule[]>('rules', [], (value) =>
+  value.map((rule) => ({ ...rule, enabled: rule.enabled ?? true })),
+)
