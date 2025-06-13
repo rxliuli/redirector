@@ -18,11 +18,8 @@
 
   let edit: null | number = null
 
-  // retro-compatibility
-  $rules.map((rule) => {
-    rule.enabled = rule.enabled ?? true
-    return rule
-  })
+  
+  handleDataRetro()
 
   function changeEdit(index: number) {
     if (edit === index) {
@@ -58,16 +55,20 @@
         reader.onload = (e) => {
           const json = JSON.parse(e.target?.result as string)
           $rules = uniqBy([...json, ...$rules], (it) => it.from)
-          $rules.map((rule) => {
-            rule.enabled = rule.enabled ?? true
-            return rule
-          })
+          handleDataRetro()
           toast.success('Imported rules')
         }
         reader.readAsText(file)
       }
     }
     input.click()
+  }
+
+  function handleDataRetro() {
+    $rules.map((rule) => {
+      rule.enabled = rule.enabled ?? true
+      return rule
+    })
   }
 </script>
 
