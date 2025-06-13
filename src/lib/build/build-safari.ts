@@ -24,18 +24,30 @@ async function updateProjectConfig() {
       'MARKETING_VERSION = 1.0;',
       `MARKETING_VERSION = ${packageJson.version};`,
     )
-    .replaceAll(
-      `INFOPLIST_KEY_CFBundleDisplayName = "${ProjectName}";`,
-      `INFOPLIST_KEY_CFBundleDisplayName = "${ProjectName}";\n				INFOPLIST_KEY_LSApplicationCategoryType = "${AppCategory}";`,
+    .replace(
+      new RegExp(
+        `INFOPLIST_KEY_CFBundleDisplayName = ("?${ProjectName}"?);`,
+        'g',
+      ),
+      `INFOPLIST_KEY_CFBundleDisplayName = $1;\n				INFOPLIST_KEY_LSApplicationCategoryType = "${AppCategory}";`,
+    )
+    .replace(
+      new RegExp(
+        `INFOPLIST_KEY_CFBundleDisplayName = ("?${ProjectName}"?);`,
+        'g',
+      ),
+      `INFOPLIST_KEY_CFBundleDisplayName = $1;\n				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;`,
     )
     .replaceAll(
       `COPY_PHASE_STRIP = NO;`,
-      `COPY_PHASE_STRIP = NO;\n				DEVELOPMENT_TEAM = ${DevelopmentTeam};`,
+      DevelopmentTeam
+        ? `COPY_PHASE_STRIP = NO;\n				DEVELOPMENT_TEAM = ${DevelopmentTeam};`
+        : 'COPY_PHASE_STRIP = NO;',
     )
-  .replace(
-    /CURRENT_PROJECT_VERSION = \d+;/g,
-    `CURRENT_PROJECT_VERSION = ${parseProjectVersion(packageJson.version)};`,
-  )
+    .replace(
+      /CURRENT_PROJECT_VERSION = \d+;/g,
+      `CURRENT_PROJECT_VERSION = ${parseProjectVersion(packageJson.version)};`,
+    )
   await fs.writeFile(projectConfigPath, newContent)
 }
 
