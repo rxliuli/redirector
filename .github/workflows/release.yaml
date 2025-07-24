@@ -58,6 +58,7 @@ jobs:
       - name: Zip extensions
         run: |
           pnpm run zip
+          pnpm run zip:firefox
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -68,5 +69,5 @@ jobs:
           prerelease: false
           files: |
             ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-chrome.zip
-            # ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-firefox.zip
-            # ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-sources.zip
+            ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-firefox.zip
+            ${{ env.DIRECTORY }}/${{env.PROJECT_NAME}}-${{ needs.Version.outputs.version }}-sources.zip

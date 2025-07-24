@@ -24,6 +24,14 @@ export default defineConfig({
         },
       },
     }
+    if (env.browser === 'firefox') {
+      // @ts-expect-error
+      manifest.browser_specific_settings = {
+        gecko: {
+          id: 'redirector@rxliuli.com',
+        },
+      }
+    }
     if (env.browser === 'safari') {
       manifest.name = 'URL Redirector'
       // TODO: https://developer.apple.com/forums/thread/735111
