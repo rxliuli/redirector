@@ -9,13 +9,13 @@ export default defineBackground(() => {
 
   let rules: Rule[] = []
 
-  browser.storage.sync.get('rules').then((data) => {
+  browser.storage.sync.get('rules').then((data: { rules?: Rule[] }) => {
     rules = data.rules || []
   })
 
   browser.storage.sync.onChanged.addListener((changes) => {
     if (changes.rules) {
-      rules = changes.rules.newValue
+      rules = changes.rules.newValue as Rule[]
     }
   })
 
