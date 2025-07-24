@@ -66,7 +66,9 @@
       />
       <Input
         id="matchUrl"
-        placeholder="^https://www.google.com/search\?q=(.*?)&.*$"
+        placeholder={mode === 'regex'
+          ? '^https://www.google.com/search?q=(.*?)&.*$'
+          : 'https://www.google.com/search?q=:id&(.*)'}
         bind:value={from}
       />
       <div>
@@ -75,7 +77,9 @@
       </div>
       <Input
         id="redirectUrl"
-        placeholder="https://duckduckgo.com/?q=$1"
+        placeholder={mode === 'regex'
+          ? 'https://duckduckgo.com/?q=$1'
+          : 'https://duckduckgo.com/?q={{search.groups.id}}'}
         bind:value={to}
       />
       <Button
@@ -93,7 +97,7 @@
     <Input
       id="testUrl"
       bind:value={origin}
-      placeholder="https://www.google.com?q=js"
+      placeholder="https://www.google.com/search?q=js&oq=js"
     />
   </div>
   <p class="text-sm break-all">
