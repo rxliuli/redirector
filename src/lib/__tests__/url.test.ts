@@ -195,3 +195,34 @@ describe('should using url params', () => {
     })
   })
 })
+
+describe('capture group replacement in regex', () => {
+  it('should replace single capture group in regex', () => {
+    const rule: MatchRule = {
+      from: '(#43poj5)',
+      to: 'newsite.com/$1',
+      mode: 'regex',
+      enabled: true
+    }
+    expect(
+        matchRule(rule, '#43poj5'),
+    ).toEqual({
+      match: true,
+      url: 'https://newsite.com/#43poj5',
+    })
+  })
+  it('should replace multiple capture groups in regex', () => {
+    const rule: MatchRule = {
+      from: 'https://example.com/(\\w+)/(\\d+)',
+      to: 'https://newsite.com/$1?id=$2',
+      mode: 'regex',
+      enabled: true
+    }
+    expect(
+        matchRule(rule, 'https://example.com/user/12345'),
+    ).toEqual({
+      match: true,
+      url: 'https://newsite.com/user?id=12345',
+    })
+  })
+})
