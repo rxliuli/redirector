@@ -21,6 +21,12 @@ function enhancedReplace(match: RegExpExecArray, replacement: string) {
   return replaced
 }
 
+function ensureValidUrl(url: string): string {
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  return `https://${url}`;
+}
 function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   let regex: RegExp
   try {
@@ -31,7 +37,10 @@ function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   }
   const r = regex.exec(url)
   if (r) {
-    return { match: true, url: enhancedReplace(r, rule.to) }
+    const targetUrl = rule.to.includes('/')
+      ? ensureValidUrl(rule.to)
+      : rule.to
+    return { match: true, url: enhancedReplace(r, targetUrl) }
   }
   return { match: false, url: url }
 }
