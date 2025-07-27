@@ -22,11 +22,11 @@ function enhancedReplace(match: RegExpExecArray, replacement: string) {
 }
 
 function ensureValidUrl(url: string): string {
-  return (/^(http|https):\/\//i.test(url))
-    ? url
-    : `https://${url}`
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  return `https://${url}`;
 }
-
 function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   let regex: RegExp
   try {
