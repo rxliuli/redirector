@@ -8,7 +8,7 @@ describe('regex match', () => {
         {
           from: '^https://duckduckgo.com/\\?.*&q=(.*?)(&.*)?$',
           to: 'https://www.google.com/search?q=$1',
-          enabled: true
+          enabled: true,
         },
         'https://duckduckgo.com/?t=h_&q=js&ia=web',
       ),
@@ -24,7 +24,7 @@ describe('regex match', () => {
         {
           from: '^https://duckduckgo.com/\\?.*&q=(.*?)(&.*)?$',
           to: 'https://www.google.com/search?q=$1',
-          enabled: true
+          enabled: true,
         },
         'https://duckduckgo.com/?q=js&ia=web',
       ),
@@ -42,7 +42,7 @@ describe('match real rule', () => {
         {
           from: 'https://youtu.be/(.*)',
           to: 'https://www.youtube.com/watch?v=$1',
-          enabled: true
+          enabled: true,
         },
         'https://youtu.be/sRHOrI59tRQ',
       ),
@@ -202,11 +202,9 @@ describe('capture group replacement in regex', () => {
       from: '(#43poj5)',
       to: 'newsite.com/$1',
       mode: 'regex',
-      enabled: true
+      enabled: true,
     }
-    expect(
-        matchRule(rule, '#43poj5'),
-    ).toEqual({
+    expect(matchRule(rule, '#43poj5')).toEqual({
       match: true,
       url: 'https://newsite.com/#43poj5',
     })
@@ -216,13 +214,26 @@ describe('capture group replacement in regex', () => {
       from: 'https://example.com/(\\w+)/(\\d+)',
       to: 'https://newsite.com/$1?id=$2',
       mode: 'regex',
-      enabled: true
+      enabled: true,
     }
-    expect(
-        matchRule(rule, 'https://example.com/user/12345'),
-    ).toEqual({
+    expect(matchRule(rule, 'https://example.com/user/12345')).toEqual({
       match: true,
       url: 'https://newsite.com/user?id=12345',
+    })
+  })
+  it('should support custom protocol', () => {
+    expect(
+      matchRule(
+        {
+          from: '^https://duckduckgo.com/\\?.*&q=(.*?)(&.*)?$',
+          to: 'custom://www.google.com/search?q=$1',
+          enabled: true,
+        },
+        'https://duckduckgo.com/?t=h_&q=js&ia=web',
+      ),
+    ).toEqual({
+      match: true,
+      url: 'custom://www.google.com/search?q=js',
     })
   })
 })
