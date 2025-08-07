@@ -150,7 +150,7 @@
                 : 'Auto'}
           </TableCell>
           <TableCell class="w-20">
-            <Checkbox checked={rule.enabled} disabled>
+            <Checkbox bind:checked={rule.enabled}>
               {#if rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
