@@ -54,7 +54,7 @@
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'rules.json'
+    a.download = `Redirector-${new Date().toISOString()}.json`
     a.click()
     toast.success('Exported rules')
   }
