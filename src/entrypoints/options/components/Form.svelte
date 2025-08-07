@@ -27,11 +27,7 @@
     }
   }
 
-  run(() => {
-    redirect = {
-      match: false,
-      url: '',
-    }
+  $effect(() => {
     if (from && to && origin) {
       const r = matchRule(
         { from: from.trim(), to: to.trim(), enabled, mode },
@@ -40,7 +36,12 @@
       console.log(from, origin, to, r)
       if (r.match) {
         redirect = r
+        return
       }
+    }
+    redirect = {
+      match: false,
+      url: '',
     }
   })
 </script>
