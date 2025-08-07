@@ -2,7 +2,7 @@
   import { rules } from '../store'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
-	import { Checkbox } from '$lib/components/ui/checkbox';
+  import { Checkbox } from '$lib/components/ui/checkbox'
   import { CheckIcon, EditIcon, TrashIcon, XIcon } from 'lucide-svelte'
   import {
     Table,
@@ -15,31 +15,31 @@
   import { uniqBy } from 'lodash-es'
   import { toast } from 'svelte-sonner'
   import { SelectGroup } from '$lib/components/extra/select'
+  import { type MatchRule } from '$lib/url'
 
-  let edit: null | number = null
+  let edit: {
+    index: number
+    rule: MatchRule
+  } | null = null
 
-  // last selected rule
-  let lastRule: null | any
-
-  function changeEdit(index: number) {
-    if (edit === index) {
-      edit = null
-    } else {
-      edit = index
-      lastRule = $rules[index] //store last selected rule
-      console.log(lastRule)
+  function openEdit(index: number) {
+    edit = {
+      index,
+      rule: { ...$rules[index] },
     }
   }
 
-  // cancel changes
-  function cancelEdit() {
-    console.log(lastRule)
+  function saveEdit() {
+    if (!edit) {
+      return
+    }
+    $rules[edit.index] = edit.rule
     edit = null
   }
-  // log last selected rule change
-  setInterval(() => {
-    console.log(lastRule)
-  }, 1000);
+
+  function cancelEdit() {
+    edit = null
+  }
 
   function deleteRule(index: number) {
     $rules = $rules.filter((_, i) => i !== index)
@@ -97,10 +97,10 @@
   <TableBody>
     {#each $rules as rule, index (index)}
       <TableRow>
-        {#if edit === index}
+        {#if edit && edit.index === index}
           <TableCell>
             <SelectGroup
-              bind:value={rule.mode}
+              bind:value={edit.rule.mode}
               options={[
                 { label: 'Regex', value: 'regex' },
                 { label: 'URL Pattern', value: 'url-pattern' },
@@ -110,24 +110,20 @@
             />
           </TableCell>
           <TableCell>
-            <Checkbox bind:checked={rule.enabled}>
-              {#if rule.enabled}
+            <Checkbox bind:checked={edit.rule.enabled}>
+              {#if edit.rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
           </TableCell>
           <TableCell>
-            <Input type="text" class="w-full" bind:value={rule.from} />
+            <Input type="text" class="w-full" bind:value={edit.rule.from} />
           </TableCell>
           <TableCell>
-            <Input type="text" class="w-full" bind:value={rule.to} />
+            <Input type="text" class="w-full" bind:value={edit.rule.to} />
           </TableCell>
           <TableCell class="flex gap-2">
-            <Button
-              variant="default"
-              size="icon"
-              on:click={() => changeEdit(index)}
-            >
+            <Button variant="default" size="icon" on:click={() => saveEdit()}>
               <CheckIcon class="h-4 w-4" />
             </Button>
             <Button
@@ -166,11 +162,11 @@
           <TableCell>
             {rule.to}
           </TableCell>
-          <TableCell class="flex gap-2">
+          <TableCell class="flex gap-2 justify-end">
             <Button
               variant="default"
               size="icon"
-              on:click={() => changeEdit(index)}
+              on:click={() => openEdit(index)}
             >
               <EditIcon class="h-4 w-4" />
             </Button>
