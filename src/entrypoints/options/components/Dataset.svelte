@@ -43,6 +43,9 @@
 
   function deleteRule(index: number) {
     $rules = $rules.filter((_, i) => i !== index)
+    if (edit) {
+      cancelEdit()
+    }
   }
 
   function exportRules() {
@@ -57,22 +60,26 @@
   }
 
   function importRules() {
+    if (edit) {
+      const ok = confirm('Import will cancel edit mode, are you sure?')
+      if (!ok) {
+        return
+      }
+      cancelEdit()
+    }
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'application/json'
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const json = JSON.parse(e.target?.result as string)
-          $rules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
-            rule.enabled = rule.enabled ?? true
-            return rule
-          })
-          toast.success('Imported rules')
-        }
-        reader.readAsText(file)
+        const text = await file.text()
+        const json = JSON.parse(text)
+        $rules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
+          rule.enabled = rule.enabled ?? true
+          return rule
+        })
+        toast.success('Imported rules')
       }
     }
     input.click()
@@ -81,9 +88,14 @@
 
 <div class="flex items-center justify-between gap-2">
   <h2 class="text-lg font-bold mr-auto">Rules</h2>
-  <Button variant="secondary" size="sm" onclick={exportRules}>Export</Button>
-  <Button variant="secondary" size="sm" onclick={importRules}>Import</Button>
+  <Button variant="secondary" size="sm" onclick={exportRules} title="Export"
+    >Export</Button
+  >
+  <Button variant="secondary" size="sm" onclick={importRules} title="Import"
+    >Import</Button
+  >
 </div>
+
 <Table class="table-fixed w-full min-w-4xl">
   <TableHeader>
     <TableRow>
@@ -110,26 +122,43 @@
             />
           </TableCell>
           <TableCell class="w-20">
-            <Checkbox bind:checked={edit.rule.enabled}>
+            <Checkbox bind:checked={edit.rule.enabled} title="Enabled">
               {#if edit.rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
           </TableCell>
           <TableCell class="w-1/2">
-            <Input type="text" class="w-full" bind:value={edit.rule.from} />
+            <Input
+              type="text"
+              class="w-full"
+              bind:value={edit.rule.from}
+              title="From"
+            />
           </TableCell>
           <TableCell class="w-1/2">
-            <Input type="text" class="w-full" bind:value={edit.rule.to} />
+            <Input
+              type="text"
+              class="w-full"
+              bind:value={edit.rule.to}
+              title="To"
+            />
           </TableCell>
           <TableCell class="w-32 flex gap-1 justify-end">
-            <Button variant="default" size="icon" onclick={() => saveEdit()}>
+            <Button
+              variant="default"
+              size="icon"
+              onclick={() => saveEdit()}
+              title="Save"
+              disabled={!edit.rule.from.trim() || !edit.rule.to.trim()}
+            >
               <CheckIcon class="h-4 w-4" />
             </Button>
             <Button
               variant="secondary"
               size="icon"
               onclick={() => cancelEdit()}
+              title="Cancel"
             >
               <XIcon class="h-4 w-4" />
             </Button>
@@ -137,6 +166,7 @@
               variant="destructive"
               size="icon"
               onclick={() => deleteRule(index)}
+              title="Delete"
             >
               <TrashIcon class="h-4 w-4" />
             </Button>
@@ -150,7 +180,7 @@
                 : 'Auto'}
           </TableCell>
           <TableCell class="w-20">
-            <Checkbox bind:checked={rule.enabled}>
+            <Checkbox bind:checked={rule.enabled} title="Enabled">
               {#if rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
@@ -167,6 +197,7 @@
               variant="default"
               size="icon"
               onclick={() => openEdit(index)}
+              title="Edit"
             >
               <SquarePenIcon class="h-4 w-4" />
             </Button>
@@ -174,6 +205,7 @@
               variant="destructive"
               size="icon"
               onclick={() => deleteRule(index)}
+              title="Delete"
             >
               <TrashIcon class="h-4 w-4" />
             </Button>
