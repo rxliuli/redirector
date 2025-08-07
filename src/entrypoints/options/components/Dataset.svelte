@@ -3,7 +3,7 @@
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
   import { Checkbox } from '$lib/components/ui/checkbox'
-  import { CheckIcon, EditIcon, TrashIcon, XIcon } from 'lucide-svelte'
+  import { CheckIcon, SquarePenIcon, TrashIcon, XIcon } from 'lucide-svelte'
   import {
     Table,
     TableBody,
@@ -20,7 +20,7 @@
   let edit: {
     index: number
     rule: MatchRule
-  } | null = null
+  } | null = $state(null)
 
   function openEdit(index: number) {
     edit = {
@@ -81,24 +81,24 @@
 
 <div class="flex items-center justify-between gap-2">
   <h2 class="text-lg font-bold mr-auto">Rules</h2>
-  <Button variant="secondary" size="sm" on:click={exportRules}>Export</Button>
-  <Button variant="secondary" size="sm" on:click={importRules}>Import</Button>
+  <Button variant="secondary" size="sm" onclick={exportRules}>Export</Button>
+  <Button variant="secondary" size="sm" onclick={importRules}>Import</Button>
 </div>
-<Table>
+<Table class="table-fixed w-full min-w-4xl">
   <TableHeader>
     <TableRow>
-      <TableHead>Mode</TableHead>
-      <TableHead>Enabled</TableHead>
-      <TableHead>From</TableHead>
-      <TableHead>To</TableHead>
-      <TableHead class="text-right">Action</TableHead>
+      <TableHead class="w-32">Mode</TableHead>
+      <TableHead class="w-20">Enabled</TableHead>
+      <TableHead class="w-1/2">From</TableHead>
+      <TableHead class="w-1/2">To</TableHead>
+      <TableHead class="w-32 text-right">Action</TableHead>
     </TableRow>
   </TableHeader>
   <TableBody>
     {#each $rules as rule, index (index)}
       <TableRow>
         {#if edit && edit.index === index}
-          <TableCell>
+          <TableCell class="w-32">
             <SelectGroup
               bind:value={edit.rule.mode}
               options={[
@@ -106,74 +106,74 @@
                 { label: 'URL Pattern', value: 'url-pattern' },
               ]}
               placeholder="Select mode"
-              class="w-36"
+              class="w-full"
             />
           </TableCell>
-          <TableCell>
+          <TableCell class="w-20">
             <Checkbox bind:checked={edit.rule.enabled}>
               {#if edit.rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
           </TableCell>
-          <TableCell>
+          <TableCell class="w-1/2">
             <Input type="text" class="w-full" bind:value={edit.rule.from} />
           </TableCell>
-          <TableCell>
+          <TableCell class="w-1/2">
             <Input type="text" class="w-full" bind:value={edit.rule.to} />
           </TableCell>
-          <TableCell class="flex gap-2">
-            <Button variant="default" size="icon" on:click={() => saveEdit()}>
+          <TableCell class="w-32 flex gap-1 justify-end">
+            <Button variant="default" size="icon" onclick={() => saveEdit()}>
               <CheckIcon class="h-4 w-4" />
             </Button>
             <Button
               variant="secondary"
               size="icon"
-              on:click={() => cancelEdit()}
+              onclick={() => cancelEdit()}
             >
               <XIcon class="h-4 w-4" />
             </Button>
             <Button
               variant="destructive"
               size="icon"
-              on:click={() => deleteRule(index)}
+              onclick={() => deleteRule(index)}
             >
               <TrashIcon class="h-4 w-4" />
             </Button>
           </TableCell>
         {:else}
-          <TableCell>
+          <TableCell class="w-32">
             {rule.mode === 'regex'
               ? 'Regex'
               : rule.mode === 'url-pattern'
                 ? 'URL Pattern'
                 : 'Auto'}
           </TableCell>
-          <TableCell>
+          <TableCell class="w-20">
             <Checkbox checked={rule.enabled} disabled>
               {#if rule.enabled}
                 <CheckIcon class="h-4 w-4" />
               {/if}
             </Checkbox>
           </TableCell>
-          <TableCell>
+          <TableCell class="w-1/2 whitespace-pre-wrap">
             {rule.from}
           </TableCell>
-          <TableCell>
+          <TableCell class="w-1/2 whitespace-pre-wrap">
             {rule.to}
           </TableCell>
-          <TableCell class="flex gap-2 justify-end">
+          <TableCell class="w-32 flex gap-1 justify-end">
             <Button
               variant="default"
               size="icon"
-              on:click={() => openEdit(index)}
+              onclick={() => openEdit(index)}
             >
-              <EditIcon class="h-4 w-4" />
+              <SquarePenIcon class="h-4 w-4" />
             </Button>
             <Button
               variant="destructive"
               size="icon"
-              on:click={() => deleteRule(index)}
+              onclick={() => deleteRule(index)}
             >
               <TrashIcon class="h-4 w-4" />
             </Button>

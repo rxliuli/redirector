@@ -8,13 +8,12 @@
   import { ModeWatcher } from 'mode-watcher'
   import Dataset from './components/Dataset.svelte'
   import Form from './components/Form.svelte'
-  import DiscordIcon from './assets/discord.svg'
   import DarkMode from './components/DarkMode.svelte'
   import { Button } from '$lib/components/ui/button'
   import { Toaster } from '$lib/components/ui/sonner'
 </script>
 
-<Card class="container my-8 p-0 md:p-8 border-none">
+<Card class="container my-8 mx-auto bg-transparent p-0 md:p-8 border-none">
   <CardHeader class="pb-4">
     <CardTitle class="flex items-center gap-2">
       <span class="text-xl font-bold mr-auto">Redirector</span>

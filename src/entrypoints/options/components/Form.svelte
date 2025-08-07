@@ -1,29 +1,23 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
   import { Label } from '$lib/components/ui/label'
-  import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from '$lib/components/ui/select'
   import { ArrowDownIcon, ArrowRightIcon } from 'lucide-svelte'
   import { rules } from '../store'
   import { matchRule } from '$lib/url'
   import type { MatchResult, MatchRule } from '$lib/url'
   import { SelectGroup } from '$lib/components/extra/select'
 
-  let from = ''
-  let to = ''
-  let origin = ''
-  let mode: MatchRule['mode'] = 'regex'
+  let from = $state('')
+  let to = $state('')
+  let origin = $state('')
+  let mode: MatchRule['mode'] = $state('regex')
   let enabled: boolean = true
-  let redirect: MatchResult = {
+  let redirect: MatchResult = $state({
     match: false,
     url: '',
-  }
+  })
 
   function addRedirect() {
     if (from && to) {
@@ -33,7 +27,7 @@
     }
   }
 
-  $: {
+  run(() => {
     redirect = {
       match: false,
       url: '',
@@ -48,7 +42,7 @@
         redirect = r
       }
     }
-  }
+  })
 </script>
 
 <div class="grid w-full items-center gap-4 mb-4">
@@ -62,7 +56,7 @@
           { label: 'URL Pattern', value: 'url-pattern' },
         ]}
         placeholder="Select mode"
-        class="max-w-96 w-full"
+        class="md:w-96 w-full"
       />
       <Input
         id="matchUrl"
@@ -86,7 +80,7 @@
         variant="secondary"
         disabled={!from || !to}
         title={!from || !to ? 'Please fill in both fields' : 'Add redirect'}
-        on:click={addRedirect}
+        onclick={addRedirect}
       >
         Add
       </Button>

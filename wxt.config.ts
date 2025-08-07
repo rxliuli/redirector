@@ -1,12 +1,13 @@
 import { defineConfig } from 'wxt'
 import path from 'path'
+import tailwindcss from '@tailwindcss/vite'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   manifestVersion: 3,
   srcDir: 'src',
   modules: ['@wxt-dev/module-svelte'],
-  runner: {
+  webExt: {
     disabled: true,
   },
   manifest: (env) => {
@@ -51,5 +52,6 @@ export default defineConfig({
       minify: false,
       sourcemap: 'inline',
     },
+    plugins: [tailwindcss() as any],
   }),
 })

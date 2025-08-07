@@ -4,31 +4,32 @@
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue,
   } from '$lib/components/ui/select'
 
-  export let value: string | undefined
-  export let placeholder: string | undefined = undefined
-  let className: string | undefined = undefined
-  export { className as class }
-  export let options: { label: string; value: string }[]
+  interface Props {
+    value: string | undefined
+    placeholder?: string | undefined
+    class?: string | undefined
+    options: { label: string; value: string }[]
+  }
+
+  let {
+    value = $bindable(),
+    placeholder = undefined,
+    class: className = undefined,
+    options,
+  }: Props = $props()
 </script>
 
 <Select
-  selected={{
-    value: value,
-  }}
-  onSelectedChange={(selected) => {
-    if (selected?.value) {
-      value = selected?.value
-    }
+  type="single"
+  {value}
+  onValueChange={(selected) => {
+    value = selected
   }}
 >
   <SelectTrigger class={className}>
-    <SelectValue
-      placeholder={options.find((option) => option.value === value)?.label ??
-        placeholder}
-    />
+    {options.find((option) => option.value === value)?.label ?? placeholder}
   </SelectTrigger>
   <SelectContent>
     {#each options as option}
