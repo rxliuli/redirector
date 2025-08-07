@@ -3,7 +3,7 @@
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
 	import { Checkbox } from '$lib/components/ui/checkbox';
-  import { CheckIcon, EditIcon, TrashIcon } from 'lucide-svelte'
+  import { CheckIcon, EditIcon, TrashIcon, XIcon } from 'lucide-svelte'
   import {
     Table,
     TableBody,
@@ -18,13 +18,28 @@
 
   let edit: null | number = null
 
+  // last selected rule
+  let lastRule: null | any
+
   function changeEdit(index: number) {
     if (edit === index) {
       edit = null
     } else {
       edit = index
+      lastRule = $rules[index] //store last selected rule
+      console.log(lastRule)
     }
   }
+
+  // cancel changes
+  function cancelEdit() {
+    console.log(lastRule)
+    edit = null
+  }
+  // log last selected rule change
+  setInterval(() => {
+    console.log(lastRule)
+  }, 1000);
 
   function deleteRule(index: number) {
     $rules = $rules.filter((_, i) => i !== index)
@@ -114,6 +129,13 @@
               on:click={() => changeEdit(index)}
             >
               <CheckIcon class="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              on:click={() => cancelEdit()}
+            >
+              <XIcon class="h-4 w-4" />
             </Button>
             <Button
               variant="destructive"
