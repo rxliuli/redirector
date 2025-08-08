@@ -2,17 +2,8 @@ import { defineConfig } from 'vitest/config'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import path from 'path'
 import { BrowserCommands } from '@vitest/browser/context'
-import { BrowserCommand, type BrowserCommandContext } from 'vitest/node'
+import { type BrowserCommandContext } from 'vitest/node'
 import { readFile } from 'fs/promises'
-import { FileChooser } from 'playwright'
-
-type _CustomCommand<T extends BrowserCommands> = {
-  [K in keyof Omit<T, 'readFile' | 'writeFile' | 'removeFile'>]: T[K] extends (
-    ...args: infer P
-  ) => infer R
-    ? (ctx: BrowserCommandContext, ...args: P) => R
-    : never
-}
 
 type CustomCommand<K extends keyof BrowserCommands> = (
   context: BrowserCommandContext,

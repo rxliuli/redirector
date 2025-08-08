@@ -1,21 +1,15 @@
-import { matchRule } from '$lib/url'
+import { MatchRule, matchRule } from '$lib/url'
 
 export default defineBackground(() => {
-  interface Rule {
-    from: string
-    to: string
-    enabled?: boolean
-  }
+  let rules: MatchRule[] = []
 
-  let rules: Rule[] = []
-
-  browser.storage.sync.get('rules').then((data: { rules?: Rule[] }) => {
+  browser.storage.sync.get('rules').then((data: { rules?: MatchRule[] }) => {
     rules = data.rules || []
   })
 
   browser.storage.sync.onChanged.addListener((changes) => {
     if (changes.rules) {
-      rules = changes.rules.newValue as Rule[]
+      rules = changes.rules.newValue as MatchRule[]
     }
   })
 
@@ -28,7 +22,9 @@ export default defineBackground(() => {
   >()
 
   function getRedirectUrl(tabId: number, url: string) {
-    const rule = rules.filter((rule) => rule.enabled ?? true).find((rule) => matchRule(rule, url).match)
+    const rule = rules
+      .filter((rule) => rule.enabled ?? true)
+      .find((rule) => matchRule(rule, url).match)
     if (!rule) {
       return {}
     }
@@ -62,12 +58,9 @@ export default defineBackground(() => {
     return { redirectUrl }
   }
 
-  async function handleRedirect(details: {
-    tabId: number
-    url?: string
-  }): Promise<{
+  function handleRedirect(details: { tabId: number; url?: string }): {
     redirectUrl?: string
-  }> {
+  } {
     if (details.tabId === -1 || !details.url) {
       return {}
     }
@@ -75,28 +68,28 @@ export default defineBackground(() => {
     if (!redirectUrl) {
       return {}
     }
-    await browser.tabs.update(details.tabId, { url: redirectUrl })
+    browser.tabs.update(details.tabId, { url: redirectUrl })
     return { redirectUrl }
   }
 
   if (!import.meta.env.SAFARI) {
     // TODO: https://developer.apple.com/forums/thread/735111
     browser.webRequest.onBeforeRequest.addListener(
-      async (details) => {
+      (details) => {
         return handleRedirect(details)
       },
       { urls: ['<all_urls>'], types: ['main_frame'] },
     )
     // TODO: https://developer.apple.com/documentation/safariservices/assessing-your-safari-web-extension-s-browser-compatibility#:~:text=onHistoryStateUpdated
     browser.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
-      await handleRedirect(details)
+      handleRedirect(details)
     })
   } else {
     browser.webNavigation.onBeforeNavigate.addListener(async (details) => {
-      await handleRedirect(details)
+      handleRedirect(details)
     })
     browser.tabs.onUpdated.addListener(async (tabId, _changeInfo, tab) => {
-      await handleRedirect({
+      handleRedirect({
         tabId,
         url: tab.url,
       })
