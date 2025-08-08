@@ -2,9 +2,12 @@ import { $, globby } from 'zx'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import dotenv from 'dotenv'
+import { findUp } from 'find-up'
 
-const rootPath = path.resolve(__dirname, '../../..')
+const rootPath = path.dirname((await findUp('package.json'))!)
 dotenv.config({ path: path.resolve(rootPath, '.env.local') })
+// https://github.com/vitejs/vite/issues/5885
+process.env.NODE_ENV = 'production'
 
 const ProjectName = 'URL Redirector'
 const AppCategory = 'public.app-category.productivity'

@@ -32,6 +32,7 @@
     "@wxt-dev/module-svelte": "^2.0.3",
     "autoprefixer": "^10.4.21",
     "dotenv": "^17.2.1",
+    "find-up": "^7.0.0",
     "hono": "^4.8.12",
     "svelte": "^5.38.0",
     "svelte-check": "^4.3.1",
