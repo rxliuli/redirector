@@ -3,7 +3,7 @@
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
   import { Checkbox } from '$lib/components/ui/checkbox'
-  import { CheckIcon, SquarePenIcon, TrashIcon, XIcon } from 'lucide-svelte'
+  import { CheckIcon, ChevronDown, ChevronUp, SquarePenIcon, TrashIcon, XIcon } from 'lucide-svelte'
   import {
     Table,
     TableBody,
@@ -22,6 +22,9 @@
     rule: MatchRule
   } | null = $state(null)
 
+  function sortingButtons() {
+
+  }
   function openEdit(index: number) {
     edit = {
       index,
@@ -193,6 +196,28 @@
             {rule.to}
           </TableCell>
           <TableCell class="w-32 flex gap-1 justify-end">
+            <div class="flex flex-col">
+              <Button
+                class="rounded-b-none h-4.5 w-9"
+                disabled={edit || !index}
+                onclick={() => openEdit(index)}
+                variant="default"
+                size="icon"
+                title="Move up"
+              >
+                <ChevronUp class="h-4 w-4" />
+              </Button>
+              <Button
+                class="rounded-t-none border-t-0 h-4.5 w-9"
+                disabled={edit || index >= $rules.length - 1}
+                onclick={() => openEdit(index)}
+                variant="default"
+                size="icon"
+                title="Move down"
+              >
+                <ChevronDown class="h-4 w-4" />
+              </Button>
+            </div>
             <Button
               variant="default"
               size="icon"
