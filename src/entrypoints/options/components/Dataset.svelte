@@ -205,7 +205,7 @@
               </Button>
               <Button
                 class="rounded-t-none border-t-0 h-4.5 w-9"
-                disabled={edit || index >= $rules.length - 1}
+                disabled={edit || index == $rules.length - 1}
                 variant="default"
                 size="icon"
                 title="Move down"
