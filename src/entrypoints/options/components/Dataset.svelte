@@ -22,9 +22,6 @@
     rule: MatchRule
   } | null = $state(null)
 
-  function sortingButtons() {
-
-  }
   function openEdit(index: number) {
     edit = {
       index,
@@ -200,7 +197,6 @@
               <Button
                 class="rounded-b-none h-4.5 w-9"
                 disabled={edit || !index}
-                onclick={() => openEdit(index)}
                 variant="default"
                 size="icon"
                 title="Move up"
@@ -210,7 +206,6 @@
               <Button
                 class="rounded-t-none border-t-0 h-4.5 w-9"
                 disabled={edit || index >= $rules.length - 1}
-                onclick={() => openEdit(index)}
                 variant="default"
                 size="icon"
                 title="Move down"
