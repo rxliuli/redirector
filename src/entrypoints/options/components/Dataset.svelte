@@ -22,6 +22,18 @@
     rule: MatchRule
   } | null = $state(null)
 
+  function sortRules(upOrDown: string, index: number) {
+    if (upOrDown == "up") {
+      let tmp = $rules[index - 1];
+      $rules[index - 1] = $rules[index];
+      $rules[index] = tmp;
+    } else if (upOrDown == "down") {
+      let tmp = $rules[index + 1];
+      $rules[index + 1] = $rules[index];
+      $rules[index] = tmp;
+    }
+  }
+
   function openEdit(index: number) {
     edit = {
       index,
@@ -197,6 +209,7 @@
               <Button
                 class="rounded-b-none h-4.5 w-9"
                 disabled={edit || !index}
+                onclick={() => {sortRules("up", index)}}
                 variant="default"
                 size="icon"
                 title="Move up"
@@ -206,6 +219,7 @@
               <Button
                 class="rounded-t-none border-t-0 h-4.5 w-9"
                 disabled={edit || index == $rules.length - 1}
+                onclick={() => {sortRules("down", index)}}
                 variant="default"
                 size="icon"
                 title="Move down"
