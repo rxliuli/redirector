@@ -58,7 +58,7 @@ jobs:
   Submit:
     permissions:
       contents: write
-    needs: Version
+    needs: [Test, Version]
     if: ${{ needs.Version.outputs.version_changed == '1' }}
     environment: Publish Extension
     runs-on: ubuntu-latest
