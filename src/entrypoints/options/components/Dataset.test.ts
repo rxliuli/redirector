@@ -204,6 +204,39 @@ describe('Action', () => {
     await expect.element(screen.getByTitle('Save')).not.toBeInTheDocument()
     await expect.element(screen.getByTitle('Cancel')).not.toBeInTheDocument()
   })
+  it('move rule down', async () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      enabled: true,
+      from: 'https://example.com/from-1',
+      to: 'https://example.com/new-1'
+    }
+    const rule2: MatchRule = {
+      mode: 'regex',
+      enabled: true,
+      from: 'https://example.com/from-2',
+      to: 'https://example.com/new-2'
+    }
+    rules.set([rule, rule2])
+    const screen = render(Dataset)
+    await expect.element(screen.getByTitle('Move up').nth(0)).toBeDisabled()
+    await expect.element(screen.getByTitle('Move down').nth(0)).toBeEnabled()
+    await expect.element(screen.getByTitle('Move up').nth(1)).toBeEnabled()
+    await expect.element(screen.getByTitle('Move down').nth(1)).toBeDisabled()
+    expect(
+      screen
+        .getByText('https://example.com/from')
+        .elements()
+        .map((it) => it.textContent),
+    ).toEqual(['https://example.com/from-1', 'https://example.com/from-2'])
+    await screen.getByTitle('Move down').nth(0).click()
+    expect(
+      screen
+        .getByText('https://example.com/from')
+        .elements()
+        .map((it) => it.textContent),
+    ).toEqual(['https://example.com/from-2', 'https://example.com/from-1'])
+  })
 }, 5000)
 
 describe('Export and Import', () => {
