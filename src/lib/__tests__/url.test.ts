@@ -197,7 +197,8 @@ describe('should using url params', () => {
 })
 
 describe('capture group replacement in regex', () => {
-  it('should replace single capture group in regex', () => {
+  // revert https://github.com/rxliuli/redirector/issues/17#issuecomment-3194934103
+  it.skip('should replace single capture group in regex', () => {
     const rule: MatchRule = {
       from: '(#43poj5)',
       to: 'newsite.com/$1',
@@ -235,5 +236,24 @@ describe('capture group replacement in regex', () => {
       match: true,
       url: 'custom://www.google.com/search?q=js',
     })
+  })
+})
+
+// https://github.com/rxliuli/redirector/issues/17#issuecomment-3194934103
+describe('fixed 17', () => {
+  it('include protocol of url from', () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: '(^https://static-cdn\\.jtvnw\\.net/emoticons/(?:[^/]+/)*)(?:dark/[1-4]|light/[1-3]).0$',
+      to: '$1light/4.0',
+    }
+    const r = matchRule(
+      rule,
+      'https://static-cdn.jtvnw.net/emoticons/v2/521050/default/light/1.0',
+    )
+    expect(r.match).true
+    expect(r.url).eq(
+      'https://static-cdn.jtvnw.net/emoticons/v2/521050/default/light/4.0',
+    )
   })
 })

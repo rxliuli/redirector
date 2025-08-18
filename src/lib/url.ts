@@ -5,7 +5,7 @@ export interface MatchRule {
   from: string
   to: string
   mode?: 'regex' | 'url-pattern'
-  enabled: boolean
+  enabled?: boolean
 }
 
 export interface MatchResult {
@@ -21,12 +21,6 @@ function enhancedReplace(match: RegExpExecArray, replacement: string) {
   return replaced
 }
 
-function ensureValidUrl(url: string): string {
-  if (new RegExp('^[a-zA-Z0-9]+://').test(url)) {
-    return url
-  }
-  return `https://${url}`
-}
 function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   let regex: RegExp
   try {
@@ -37,8 +31,7 @@ function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   }
   const r = regex.exec(url)
   if (r) {
-    const targetUrl = rule.to.includes('/') ? ensureValidUrl(rule.to) : rule.to
-    return { match: true, url: enhancedReplace(r, targetUrl) }
+    return { match: true, url: enhancedReplace(r, rule.to) }
   }
   return { match: false, url: url }
 }
