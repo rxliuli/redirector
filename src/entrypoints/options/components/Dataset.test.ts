@@ -209,13 +209,13 @@ describe('Action', () => {
       mode: 'regex',
       enabled: true,
       from: 'https://example.com/from-1',
-      to: 'https://example.com/new-1'
+      to: 'https://example.com/new-1',
     }
     const rule2: MatchRule = {
       mode: 'regex',
       enabled: true,
       from: 'https://example.com/from-2',
-      to: 'https://example.com/new-2'
+      to: 'https://example.com/new-2',
     }
     rules.set([rule, rule2])
     const screen = render(Dataset)
@@ -305,7 +305,9 @@ describe('Export and Import', () => {
       }),
       screen.getByTitle('Import').click(),
     ])
-    await expect.element(screen.getByTitle('From')).not.toBeInTheDocument()
+    await expect
+      .element(screen.getByTitle('From', { exact: true }))
+      .not.toBeInTheDocument()
     await expect.element(screen.getByText(rule2.from)).toBeInTheDocument()
     const rows = [...document.querySelectorAll('table > tbody > tr')]
     expect(rows).length(2)
