@@ -3,7 +3,14 @@
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
   import { Checkbox } from '$lib/components/ui/checkbox'
-  import { CheckIcon, ChevronDown, ChevronUp, SquarePenIcon, TrashIcon, XIcon } from 'lucide-svelte'
+  import {
+    CheckIcon,
+    ChevronDown,
+    ChevronUp,
+    SquarePenIcon,
+    TrashIcon,
+    XIcon,
+  } from 'lucide-svelte'
   import {
     Table,
     TableBody,
@@ -23,14 +30,14 @@
   } | null = $state(null)
 
   function sortRules(upOrDown: string, index: number) {
-    if (upOrDown == "up") {
-      let tmp = $rules[index - 1];
-      $rules[index - 1] = $rules[index];
-      $rules[index] = tmp;
-    } else if (upOrDown == "down") {
-      let tmp = $rules[index + 1];
-      $rules[index + 1] = $rules[index];
-      $rules[index] = tmp;
+    if (upOrDown == 'up') {
+      let tmp = $rules[index - 1]
+      $rules[index - 1] = $rules[index]
+      $rules[index] = tmp
+    } else if (upOrDown == 'down') {
+      let tmp = $rules[index + 1]
+      $rules[index + 1] = $rules[index]
+      $rules[index] = tmp
     }
   }
 
@@ -198,10 +205,10 @@
               {/if}
             </Checkbox>
           </TableCell>
-          <TableCell class="w-1/2 whitespace-pre-wrap">
+          <TableCell class="w-1/2 truncate" title={rule.from}>
             {rule.from}
           </TableCell>
-          <TableCell class="w-1/2 whitespace-pre-wrap">
+          <TableCell class="w-1/2 truncate" title={rule.to}>
             {rule.to}
           </TableCell>
           <TableCell class="w-32 flex gap-1 justify-end">
@@ -209,7 +216,9 @@
               <Button
                 class="rounded-b-none h-4.5 w-9"
                 disabled={edit || !index}
-                onclick={() => {sortRules("up", index)}}
+                onclick={() => {
+                  sortRules('up', index)
+                }}
                 variant="default"
                 size="icon"
                 title="Move up"
@@ -219,7 +228,9 @@
               <Button
                 class="rounded-t-none border-t-0 h-4.5 w-9"
                 disabled={edit || index == $rules.length - 1}
-                onclick={() => {sortRules("down", index)}}
+                onclick={() => {
+                  sortRules('down', index)
+                }}
                 variant="default"
                 size="icon"
                 title="Move down"
