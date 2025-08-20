@@ -257,3 +257,17 @@ describe('fixed 17', () => {
     )
   })
 })
+
+describe('encodeURIComponent', () => {
+  it('should encode URL correctly', () => {
+    const params = 'https://www.reddit.com/r/chrome/comments/1mr4kcr'
+    const url = 'https://click.redditmail.com/CL0/' + encodeURIComponent(params)
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://click.redditmail.com/CL0/*',
+      to: '{{pathname.groups.0}}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq(params)
+  })
+})
