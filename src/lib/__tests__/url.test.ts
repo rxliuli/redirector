@@ -33,6 +33,18 @@ describe('regex match', () => {
       url: 'https://duckduckgo.com/?q=js&ia=web',
     })
   })
+
+  it('should auto decode url', () => {
+    const params = 'https://www.reddit.com/r/chrome/comments/1mr4kcr'
+    const url = 'https://click.redditmail.com/CL0/' + encodeURIComponent(params)
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: 'https://click.redditmail.com/CL0/(.*)',
+      to: '$1',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq(params)
+  })
 })
 
 describe('match real rule', () => {
@@ -258,7 +270,7 @@ describe('fixed 17', () => {
   })
 })
 
-describe('encodeURIComponent', () => {
+describe('url-pattern', () => {
   it('should encode URL correctly', () => {
     const params = 'https://www.reddit.com/r/chrome/comments/1mr4kcr'
     const url = 'https://click.redditmail.com/CL0/' + encodeURIComponent(params)

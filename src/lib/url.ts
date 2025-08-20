@@ -16,7 +16,7 @@ export interface MatchResult {
 function enhancedReplace(match: RegExpExecArray, replacement: string) {
   let replaced = replacement
   for (let i = 1; i < match.length; i++) {
-    replaced = replaced.replaceAll('$' + i, match[i] ?? '')
+    replaced = replaced.replaceAll('$' + i, decodeURIComponent(match[i]) ?? '')
   }
   return replaced
 }
