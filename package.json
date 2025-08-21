@@ -34,6 +34,7 @@
     "dotenv": "^17.2.1",
     "find-up": "^7.0.0",
     "hono": "^4.8.12",
+    "playwright": "^1.55.0",
     "svelte": "^5.38.0",
     "svelte-check": "^4.3.1",
     "tailwind-variants": "^2.1.0",
