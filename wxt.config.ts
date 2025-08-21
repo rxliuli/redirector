@@ -13,7 +13,7 @@ export default defineConfig({
   manifest: (env) => {
     const manifest = {
       name: 'Redirector',
-      permissions: ['storage', 'tabs', 'webRequest', 'webNavigation'],
+      permissions: ['storage', 'webRequest', 'webNavigation'],
       host_permissions: ['<all_urls>'],
       action: {
         default_icon: {
@@ -39,6 +39,7 @@ export default defineConfig({
       manifest.permissions = manifest.permissions.filter(
         (permission) => permission !== 'webRequest',
       )
+      manifest.permissions.push('tabs')
     }
     return manifest
   },
