@@ -10,7 +10,7 @@
     SquarePenIcon,
     TrashIcon,
     XIcon,
-  } from 'lucide-svelte'
+  } from '@lucide/svelte'
   import {
     Table,
     TableBody,

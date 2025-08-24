@@ -1,23 +1,20 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
   import { Label } from '$lib/components/ui/label'
-  import { ArrowDownIcon, ArrowRightIcon } from 'lucide-svelte'
+  import { ArrowDownIcon, ArrowRightIcon } from '@lucide/svelte'
   import { rules } from '../store'
-  import { matchRule } from '$lib/url'
-  import type { MatchResult, MatchRule } from '$lib/url'
+  import type { MatchRule } from '$lib/url'
   import { SelectGroup } from '$lib/components/extra/select'
+  import { checkRuleChain, type CheckResult } from '$lib/check'
+  import RuleCheckResult from './RuleCheckResult.svelte'
 
   let from = $state('')
   let to = $state('')
   let origin = $state('')
   let mode: MatchRule['mode'] = $state('regex')
   let enabled: boolean = true
-  let redirect: MatchResult = $state({
-    match: false,
-    url: '',
-  })
+  let ruleCheckResult: CheckResult | null = $state(null)
 
   function addRedirect() {
     if (from && to) {
@@ -29,19 +26,11 @@
 
   $effect(() => {
     if (from && to && origin) {
-      const r = matchRule(
-        { from: from.trim(), to: to.trim(), enabled, mode },
-        origin.trim(),
-      )
-      console.log(from, origin, to, r)
-      if (r.match) {
-        redirect = r
-        return
-      }
-    }
-    redirect = {
-      match: false,
-      url: '',
+      const currentRule = { from: from.trim(), to: to.trim(), enabled, mode }
+      const tempRules = [currentRule, ...$rules]
+      ruleCheckResult = checkRuleChain(tempRules, origin.trim())
+    } else {
+      ruleCheckResult = null
     }
   })
 </script>
@@ -62,9 +51,13 @@
       <Input
         id="matchUrl"
         placeholder={mode === 'regex'
-          ? '^https://www.google.com/search?q=(.*?)&.*$'
+          ? '^https://www.google.com/search\\?q=(.*?)&.*$'
           : 'https://www.google.com/search?q=:id&(.*)'}
         bind:value={from}
+        onblur={() => {
+          from = from.trim()
+        }}
+        title="from"
       />
       <div>
         <ArrowDownIcon class="w-4 h-4 md:hidden" />
@@ -76,6 +69,10 @@
           ? 'https://duckduckgo.com/?q=$1'
           : 'https://duckduckgo.com/?q={{search.groups.id}}'}
         bind:value={to}
+        onblur={() => {
+          to = to.trim()
+        }}
+        title="to"
       />
       <Button
         variant="secondary"
@@ -93,14 +90,12 @@
       id="testUrl"
       bind:value={origin}
       placeholder="https://www.google.com/search?q=js&oq=js"
+      title="Test URL"
     />
   </div>
-  <p class="text-sm break-all">
-    Redirect URL:
-    {#if redirect.match}
-      <span class="text-green-600 font-semibold">{redirect.url}</span>
-    {:else}
-      <span class="text-yellow-600 font-semibold">No match</span>
-    {/if}
-  </p>
+
+  <!-- Rule chain check results -->
+  {#if ruleCheckResult}
+    <RuleCheckResult result={ruleCheckResult} />
+  {/if}
 </div>
