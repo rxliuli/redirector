@@ -283,3 +283,16 @@ describe('url-pattern', () => {
     expect(r.url).eq(params)
   })
 })
+
+// https://github.com/rxliuli/redirector/issues/18
+describe('fixed 18', () => {
+  it('should handle URL with query parameters', () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: '^https://(a|b)(-c)?.test.com',
+      to: 'https://d$2.test.com/$1',
+    }
+    const r = matchRule(rule, 'https://a.test.com')
+    expect(r.url).eq('https://d.test.com/a')
+  })
+})
