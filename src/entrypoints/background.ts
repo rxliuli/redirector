@@ -1,16 +1,14 @@
-import { getRedirectUrl } from '$lib/redirect'
+import { getRedirectUrl, store } from '$lib/redirect'
 import { MatchRule, matchRule } from '$lib/url'
 
 export default defineBackground(() => {
-  let rules: MatchRule[] = []
-
   browser.storage.sync.get('rules').then((data: { rules?: MatchRule[] }) => {
-    rules = data.rules || []
+    store.rules = data.rules || []
   })
 
   browser.storage.sync.onChanged.addListener((changes) => {
     if (changes.rules) {
-      rules = changes.rules.newValue as MatchRule[]
+      store.rules = changes.rules.newValue as MatchRule[]
     }
   })
 
