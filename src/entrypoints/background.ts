@@ -29,22 +29,23 @@ export default defineBackground(() => {
   const confirmedNavigations = new Set<string>()
 
   browser.webNavigation.onBeforeNavigate.addListener(async (details) => {
+    // console.log('onBeforeNavigate', details.url)
     const key = `${details.tabId}|${details.url}`
     confirmedNavigations.add(key)
-    if (import.meta.env.SAFARI) {
-      handleRedirect(details)
-    }
+    handleRedirect(details)
   })
   if (!import.meta.env.SAFARI) {
     // TODO: https://developer.apple.com/forums/thread/735111
     browser.webRequest.onBeforeRequest.addListener(
       (details) => {
+        // console.log('onBeforeRequest', details.url)
         const key = `${details.tabId}|${details.url}`
         // fixed: https://github.com/rxliuli/redirector/issues/19
         if (!confirmedNavigations.has(key)) {
           return {}
         }
         confirmedNavigations.delete(key)
+        // console.log('handleRedirect', details.url)
         return handleRedirect(details)
       },
       { urls: ['<all_urls>'], types: ['main_frame'] },
