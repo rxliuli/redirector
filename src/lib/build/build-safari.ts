@@ -14,7 +14,7 @@ const AppCategory = 'public.app-category.productivity'
 const DevelopmentTeam = process.env.DEVELOPMENT_TEAM
 
 await $`pnpm wxt build -b safari`
-await $`xcrun safari-web-extension-converter --bundle-identifier com.rxliuli.url-redirector --force --project-location .output .output/safari-mv3`
+await $`xcrun safari-web-extension-converter --bundle-identifier com.rxliuli.URL-Redirector --force --project-location .output .output/safari-mv3`
 async function updateProjectConfig() {
   const projectConfigPath = path.resolve(
     rootPath,
