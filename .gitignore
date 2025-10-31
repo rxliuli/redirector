@@ -17,6 +17,7 @@ URL Redirector */
 URL Redirector
 Redirector
 .env.local
+.claude
 
 # Editor directories and files
 .vscode/*

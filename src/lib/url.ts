@@ -1,4 +1,3 @@
-import Mustache from 'mustache'
 import 'urlpattern-polyfill'
 
 export interface MatchRule {
@@ -13,12 +12,50 @@ export interface MatchResult {
   url: string
 }
 
-function enhancedReplace(match: RegExpExecArray, replacement: string) {
-  let replaced = replacement
-  for (let i = 1; i < match.length; i++) {
-    replaced = replaced.replaceAll('$' + i, decodeURIComponent(match[i] ?? ''))
-  }
-  return replaced
+const pipeFunctions: Record<string, (value: string) => string> = {
+  decodeURIComponent: (value: string) => {
+    try {
+      return decodeURIComponent(value)
+    } catch {
+      return value
+    }
+  },
+  atob: (value: string) => {
+    try {
+      return atob(value)
+    } catch {
+      return value
+    }
+  },
+}
+
+function templateReplace(
+  template: string,
+  getValue: (path: string) => string | undefined,
+): string {
+  return template.replace(
+    /\{\{\s*([\w.$]+)\s*(?:\|\s*([\w|\s]+?)\s*)?\}\}/g,
+    (fullMatch, path, pipelineStr) => {
+      let value = getValue(path)
+
+      if (value === undefined) {
+        return fullMatch
+      }
+
+      if (pipelineStr) {
+        const pipeNames = pipelineStr
+          .split('|')
+          .map((name: string) => name.trim())
+        for (const pipeName of pipeNames) {
+          if (pipeFunctions[pipeName]) {
+            value = pipeFunctions[pipeName](value)
+          }
+        }
+      }
+
+      return value
+    },
+  )
 }
 
 function isRegexMatch(rule: MatchRule, url: string): MatchResult {
@@ -26,35 +63,54 @@ function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   try {
     regex = new RegExp(rule.from, 'ig')
   } catch (error) {
-    // console.error('Invalid regex', from, error)
     return { match: false, url: url }
   }
   const r = regex.exec(url)
   if (r) {
-    return { match: true, url: enhancedReplace(r, rule.to) }
+    let replaced = rule.to
+
+    replaced = templateReplace(replaced, (path) => {
+      if (path.startsWith('$')) {
+        const groupNum = parseInt(path.substring(1))
+        return r[groupNum] ?? undefined
+      }
+      return undefined
+    })
+
+    for (let i = 1; i < r.length; i++) {
+      replaced = replaced.replaceAll('$' + i, r[i] ?? '')
+    }
+
+    return { match: true, url: replaced }
   }
   return { match: false, url: url }
 }
 
 function isURLPatternMatch(rule: MatchRule, url: string): MatchResult {
   const r = new URLPattern(rule.from)
-  Mustache.escape = (t) => t
   if (r.test(url)) {
-    const matched = r.exec(url)
-    ;(Object.values(matched ?? {}) as URLPatternComponentResult[]).forEach(
-      (it) => {
-        const groups = it.groups
-        if (groups) {
-          Object.keys(groups).forEach((k) => {
-            const value = groups[k]
-            if (value) {
-              groups[k] = decodeURIComponent(value)
-            }
-          })
+    const matched = r.exec(url)!
+
+    const replaced = templateReplace(rule.to, (path) => {
+      const parts = path.split('.')
+      let value: any = matched
+
+      for (const part of parts) {
+        if (value && typeof value === 'object' && part in value) {
+          value = value[part]
+        } else {
+          return undefined
         }
-      },
-    )
-    return { match: true, url: Mustache.render(rule.to, matched) }
+      }
+
+      if (typeof value !== 'string') {
+        return undefined
+      }
+
+      return value
+    })
+
+    return { match: true, url: replaced }
   }
   return { match: false, url: url }
 }

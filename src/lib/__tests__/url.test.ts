@@ -40,7 +40,7 @@ describe('regex match', () => {
     const rule: MatchRule = {
       mode: 'regex',
       from: 'https://click.redditmail.com/CL0/(.*)',
-      to: '$1',
+      to: '{{$1|decodeURIComponent}}',
     }
     const r = matchRule(rule, url)
     expect(r.url).eq(params)
@@ -146,7 +146,7 @@ describe('should using url params', () => {
   it('decode url', () => {
     const rule: MatchRule = {
       from: 'https://link.zhihu.com/?target=:url',
-      to: '{{search.groups.url}}',
+      to: '{{search.groups.url|decodeURIComponent}}',
     }
     expect(
       matchRule(
@@ -161,7 +161,7 @@ describe('should using url params', () => {
   it('nested url', () => {
     const rule: MatchRule = {
       from: 'https://www.google.com/url?q=:url&*',
-      to: '{{search.groups.url}}',
+      to: '{{search.groups.url|decodeURIComponent}}',
     }
     let url =
       'https://www.google.com/url?q=https://www.google.com/url?q%3Dhttps://archiveofourown.org/works/46606894%26amp;sa%3DD%26amp;source%3Deditors%26amp;ust%3D1730032801876547%26amp;usg%3DAOvVaw1sQgvzpIHgk4ky36GUr0Qg&sa=D&source=docs&ust=1730032804915522&usg=AOvVaw0EzJyyDgDMcHFs2nxdHMBo'
@@ -277,10 +277,44 @@ describe('url-pattern', () => {
     const rule: MatchRule = {
       mode: 'url-pattern',
       from: 'https://click.redditmail.com/CL0/*',
-      to: '{{pathname.groups.0}}',
+      to: '{{pathname.groups.0|decodeURIComponent}}',
     }
     const r = matchRule(rule, url)
     expect(r.url).eq(params)
+  })
+  it('should support pipeline in url-pattern mode', () => {
+    const encodedUrl = encodeURIComponent('https://www.example.com/test')
+    const url = 'https://redirect.com/go?url=' + encodedUrl
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://redirect.com/go?url=:target',
+      to: '{{ search.groups.target | decodeURIComponent }}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq('https://www.example.com/test')
+  })
+  it('should support atob pipeline in url-pattern mode', () => {
+    const base64Url = btoa('https://www.youtube.com/watch?v=test123')
+    const url = `https://mail.example.com/redirect?link=${base64Url}`
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://mail.example.com/redirect?link=:encoded',
+      to: '{{ search.groups.encoded | atob }}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq('https://www.youtube.com/watch?v=test123')
+  })
+  it('should support multiple pipelines in url-pattern mode', () => {
+    const originalUrl = 'https://www.example.com/page?test=value'
+    const encodedData = btoa(encodeURIComponent(originalUrl))
+    const url = `https://redirect.example.com/go/${encodedData}`
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://redirect.example.com/go/:encoded',
+      to: '{{ pathname.groups.encoded | atob | decodeURIComponent }}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq(originalUrl)
   })
 })
 
@@ -294,5 +328,67 @@ describe('fixed 18', () => {
     }
     const r = matchRule(rule, 'https://a.test.com')
     expect(r.url).eq('https://d.test.com/a')
+  })
+})
+
+// https://discord.com/channels/1376360845344374784/1433131118491861023
+it('fixed redirect url search params', () => {
+  const rule: MatchRule = {
+    mode: 'regex',
+    from: 'bing\\.com\\/search.*?[\\?&]q=([^&]+)',
+    to: 'https://www.google.com/search?q=$1',
+  }
+  const r = matchRule(rule, 'https://www.bing.com/search?q=ab%26c')
+  expect(r).toEqual({
+    match: true,
+    url: 'https://www.google.com/search?q=ab%26c',
+  })
+})
+
+describe('replace pipeline', () => {
+  it('decodeURIComponent in replacement', () => {
+    const params = 'https://www.reddit.com/r/chrome/comments/1mr4kcr'
+    const url = 'https://click.redditmail.com/CL0/' + encodeURIComponent(params)
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: 'https://click.redditmail.com/CL0/(.*)',
+      to: '{{$1|decodeURIComponent}}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq(params)
+  })
+  it('should support {{$1}} without pipeline', () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: 'https://youtu.be/(.*)',
+      to: 'https://www.youtube.com/watch?v={{$1}}',
+    }
+    const r = matchRule(rule, 'https://youtu.be/sRHOrI59tRQ')
+    expect(r.url).eq('https://www.youtube.com/watch?v=sRHOrI59tRQ')
+  })
+  it('atob in replacement', () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: 'https://mail.yandex.ru/re.jsx\\?.*&l=(.*)',
+      to: '{{$1|atob}}',
+    }
+    const r = matchRule(
+      rule,
+      'https://mail.yandex.ru/re.jsx?uid=12345&l=aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1kUXc0T1lYTm9iM0lnYzJWeWRtVnVkR2x2YmtWdQ==',
+    )
+    expect(r.url).eq(
+      'https://www.youtube.com/watch?v=dQw4OYXNob3Igc2VydmVudGlvbkVu',
+    )
+  })
+  it('multiple pipelines', () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: 'https://example.com/encode\\?data=(.*)',
+      to: '{{$1|atob|decodeURIComponent}}',
+    }
+    const originalUrl = 'https://www.test.com/page?param=value'
+    const encodedData = btoa(encodeURIComponent(originalUrl))
+    const r = matchRule(rule, `https://example.com/encode?data=${encodedData}`)
+    expect(r.url).eq(originalUrl)
   })
 })

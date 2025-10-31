@@ -147,7 +147,7 @@ describe('Real-world', () => {
     }
     const rule2: MatchRule = {
       from: 'https://click.redditmail.com/CL0/(.*)',
-      to: '$1',
+      to: '{{$1|decodeURIComponent}}',
     }
     const result = checkRuleChain([rule1, rule2], url)
     expect(result).toEqual({

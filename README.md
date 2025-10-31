@@ -32,19 +32,60 @@ Install from the Chrome Web Store.
 
 ## Example Rule
 
+### Regular Expression Mode
+
 Regular expression is a powerful tool for matching URL patterns. Here are some examples:
 
 - Redirect Google search to DuckDuckGo:
   - From: `^https://www.google.com/search\?q=(.*?)&.*$`
   - To: `https://duckduckgo.com/?q=$1`
 
+- Decode URL-encoded redirect links:
+  - From: `https://click.redditmail.com/CL0/(.*)`
+  - To: `{{$1|decodeURIComponent}}`
+
+- Decode base64-encoded URLs:
+  - From: `https://mail.yandex.ru/re.jsx\?.*&l=(.*)`
+  - To: `{{$1|atob}}`
+
+- Chain multiple transformations:
+  - From: `https://example.com/redirect\?data=(.*)`
+  - To: `{{$1|atob|decodeURIComponent}}`
+
+### URL Pattern Mode
+
 URLPattern is a more powerful and flexible tool for matching URL patterns. Here are some examples:
 
 - Redirect Google search to DuckDuckGo:
   - From: `https://www.google.com/search?q=:id&(.*)`
-  - To: `https://duckduckgo.com/?q={{search.groups.id}}`
+  - To: `https://duckduckgo.com/?q={{search.groups.id|decodeURIComponent}}`
+
+- Decode URL parameters:
+  - From: `https://link.zhihu.com/?target=:url`
+  - To: `{{search.groups.url|decodeURIComponent}}`
+
+- Base64 decode and URL decode:
+  - From: `https://redirect.example.com/go/:encoded`
+  - To: `{{pathname.groups.encoded|atob|decodeURIComponent}}`
 
 Reference: <https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/URLPattern>
+
+### Pipeline Syntax
+
+The `{{}}` syntax supports pipeline transformations for processing captured values:
+
+**Available Pipelines:**
+
+- `decodeURIComponent` - Decode URL-encoded strings
+- `atob` - Decode base64-encoded strings
+
+**Syntax:**
+
+- Single pipeline: `{{$1|decodeURIComponent}}`
+- Multiple pipelines: `{{$1|atob|decodeURIComponent}}`
+- With spaces: `{{ $1 | atob | decodeURIComponent }}`
+
+**Note:** The traditional `$1`, `$2` syntax (without `{{}}`) does not support pipelines. Use `{{$1}}` syntax for pipeline support.
 
 ## Privacy
 
