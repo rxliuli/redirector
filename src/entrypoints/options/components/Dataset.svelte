@@ -19,7 +19,7 @@
     TableHeader,
     TableRow,
   } from '$lib/components/ui/table'
-  import { uniqBy } from 'lodash-es'
+  import { uniqBy } from 'es-toolkit'
   import { toast } from 'svelte-sonner'
   import { SelectGroup } from '$lib/components/extra/select'
   import { type MatchRule } from '$lib/url'
