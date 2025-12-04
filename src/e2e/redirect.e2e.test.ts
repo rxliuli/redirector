@@ -263,6 +263,9 @@ test('circular redirect detection resets after timeout', async ({
 })
 
 // Test multiple rules chaining redirects (like Reddit email link cleanup)
+// This test validates that intermediate redirects are computed internally by the extension
+// and do NOT appear in browser history. Only the initial URL and final destination are recorded.
+// Example: Rules define a → b → c → d, but browser history only shows [a, d]
 test('chain multiple redirect rules', async ({
   serviceWorker,
   context,
@@ -271,6 +274,9 @@ test('chain multiple redirect rules', async ({
   // Setup multiple rules that should apply in sequence:
   // Rule 1: Remove click tracker - extract the target URL
   // Rule 2: Clean up tracking parameters from Reddit URL
+  // Rule 3: Normalize the final URL
+  // Expected internal chain: /click-tracker → /reddit/comment?ref=... → /reddit/comment → /reddit/clean
+  // Browser history should only contain: /click-tracker (initial) and /reddit/clean (final)
   await serviceWorker.evaluate(
     async (testServerUrl) => {
       await chrome.storage.sync.set({
@@ -301,35 +307,42 @@ test('chain multiple redirect rules', async ({
 
   await context.pages()[0].waitForTimeout(500)
 
-  // Track redirects via console logs
-  const redirects: string[] = []
+  // Track redirects via console logs to verify internal chain processing
+  const redirectLogs: string[] = []
   serviceWorker.on('console', (msg) => {
     const text = msg.text()
-    if (text.includes('[webRequest] Redirecting from')) {
-      redirects.push(text)
-    }
+    redirectLogs.push(text)
   })
 
   const page = await context.newPage()
 
+  // Record initial history length
+  const initialHistoryLength = await page.evaluate(() => window.history.length)
+
+  // Track navigation events to detect intermediate page loads
+  const navigationUrls: string[] = []
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) {
+      navigationUrls.push(frame.url())
+    }
+  })
+
   // Simulate clicking a Reddit email link with tracking
-  // This should trigger multiple redirects:
-  // 1. /click-tracker?url=...reddit/comment?ref=email...
+  // This should trigger multiple redirects internally:
+  // 1. /click-tracker?url=...reddit/comment?ref=email... (initial navigation)
   // 2. → /reddit/comment?ref=email... (rule 1: extract from click tracker and decode)
   // 3. → /reddit/comment (rule 2: remove tracking params)
-  // 4. → /reddit/clean (rule 3: normalize URL)
+  // 4. → /reddit/clean (rule 3: normalize URL - final destination)
 
   const trackedRedditUrl = encodeURIComponent(
     `${testServer.url}/reddit/comment?correlation_id=abc123&ref=email_comment_reply&ref_campaign=email`,
   )
 
-  await page
-    .goto(`${testServer.url}/click-tracker?url=${trackedRedditUrl}`, {
-      timeout: 5000,
-    })
-    .catch(() => {
-      // Expected ERR_ABORTED during redirects
-    })
+  const initialUrl = `${testServer.url}/click-tracker?url=${trackedRedditUrl}`
+
+  await page.goto(initialUrl, { timeout: 5000 }).catch(() => {
+    // Expected ERR_ABORTED during redirects
+  })
 
   await page.waitForTimeout(2000)
 
@@ -338,8 +351,33 @@ test('chain multiple redirect rules', async ({
   // Verify we ended up at the clean URL after all redirects
   expect(finalUrl).toBe(`${testServer.url}/reddit/clean`)
 
-  // Verify multiple redirects happened
-  expect(redirects.length).toBeGreaterThanOrEqual(2)
+  // Get final history length
+  const finalHistoryLength = await page.evaluate(() => window.history.length)
+
+  // CRITICAL ASSERTION: Browser history should only contain 2 entries:
+  // 1. The initial URL (/click-tracker?url=...)
+  // 2. The final destination (/reddit/clean)
+  // The intermediate redirects (/reddit/comment?ref=..., /reddit/comment) should NOT be in history
+  // because they were computed internally by the extension via checkRuleChain()
+  const historyEntriesAdded = finalHistoryLength - initialHistoryLength
+
+  // Should only have added 1 entry (the final destination)
+  // The initial navigation was attempted but redirected before completing
+  expect(historyEntriesAdded).toBeLessThanOrEqual(1)
+
+  // Verify that only the final URL was actually loaded in the browser
+  // The intermediate URLs should not have been navigated to
+  expect(navigationUrls).toHaveLength(1)
+  expect(navigationUrls[0]).toBe(finalUrl)
+
+  // Verify the extension processed the request
+  // After the chain is computed, getRedirectUrl returns the final URL directly
+  // and logs "No matching rule" for the final destination (since it doesn't match any more rules)
+  const hasRedirectProcessing = redirectLogs.some(
+    (log) =>
+      log.includes('onBeforeNavigate') || log.includes('handleRedirect'),
+  )
+  expect(hasRedirectProcessing).toBe(true)
 
   await page.close()
 
