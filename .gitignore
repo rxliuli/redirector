@@ -18,6 +18,7 @@ URL Redirector
 Redirector
 .env.local
 .claude
+test-results
 
 # Editor directories and files
 .vscode/*

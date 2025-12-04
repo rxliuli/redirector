@@ -4,6 +4,7 @@ import path from 'path'
 import { BrowserCommands } from '@vitest/browser/context'
 import { type BrowserCommandContext } from 'vitest/node'
 import { readFile } from 'fs/promises'
+import { playwright } from '@vitest/browser-playwright'
 
 type CustomCommand<K extends keyof BrowserCommands> = (
   context: BrowserCommandContext,
@@ -47,9 +48,11 @@ declare module '@vitest/browser/context' {
 export default defineConfig({
   plugins: [svelte()],
   test: {
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    exclude: ['src/**/e2e/*'],
     browser: {
       enabled: true,
-      provider: 'playwright',
+      provider: playwright(),
       // https://vitest.dev/guide/browser/playwright
       instances: [{ browser: 'chromium', headless: true }],
       commands: {
