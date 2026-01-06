@@ -1,6 +1,6 @@
 # Redirector
 
-[Chrome](https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin), [Safari](https://apps.apple.com/cn/app/url-redirector/id6743197230), [Edge](https://microsoftedge.microsoft.com/addons/detail/redirector/jhdjcofnjfeljeekjklhgfmfocfgibmm)
+[Chrome](https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin), [Safari](https://apps.apple.com/cn/app/url-redirector/id6743197230), [Edge](https://microsoftedge.microsoft.com/addons/detail/redirector/jhdjcofnjfeljeekjklhgfmfocfgibmm), [Firefox](https://addons.mozilla.org/en-US/firefox/addon/redirector-url/)
 
 ## Introduction
 
