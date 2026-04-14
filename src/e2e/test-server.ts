@@ -245,6 +245,31 @@ export function createTestServer(port = 3456) {
     `)
   })
 
+  // Regex query param redirect test
+  app.get('/result', (c) => {
+    const q = c.req.query('q')
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Result</title></head>
+        <body><h1>Result for: ${q}</h1></body>
+      </html>
+    `)
+  })
+
+  // Convergent/idempotent redirect test (many-to-one pattern)
+  app.get('/region-:region/:path', (c) => {
+    const region = c.req.param('region')
+    const path = c.req.param('path')
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Region ${region}</title></head>
+        <body><h1>Region: ${region}, Path: ${path}</h1></body>
+      </html>
+    `)
+  })
+
   const server = serve({ fetch: app.fetch, port })
 
   return {

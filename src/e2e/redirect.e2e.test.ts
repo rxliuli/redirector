@@ -43,14 +43,36 @@ function testRule(options: RedirectRule, only?: boolean) {
   )
 }
 
-testRule({
-  rule: {
-    from: 'https://www.google.com/search\\?q=(.+?)(&.*)?$',
-    mode: 'regex',
-    to: 'https://duckduckgo.com/?q=$1',
-  },
-  from: 'https://www.google.com/search?q=playwright&oq=playwright',
-  to: 'https://duckduckgo.com/?q=playwright',
+// Test regex capture group redirect with query params (local server, no external dependency)
+test('redirect with regex capture groups on query params', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/search\\?q=(.+?)(&.*)?$`,
+          mode: 'regex',
+          to: `${testServerUrl}/result?q=$1`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/search?q=playwright&oq=playwright`, {
+      timeout: 5000,
+    })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/result?q=playwright`)
+
+  await page.close()
 })
 ;[
   {
@@ -188,7 +210,7 @@ test('prevent circular redirects', async ({
 
   // Verify that the circular redirect detection was triggered
   const hasCircularRedirectError = consoleMessages.some((msg) =>
-    msg.includes('Circular redirect detection'),
+    msg.includes('circular-redirect'),
   )
 
   expect(hasCircularRedirectError).toBe(true)
@@ -239,7 +261,7 @@ test('circular redirect detection resets after timeout', async ({
 
   // Verify circular redirect was detected
   expect(
-    consoleMessages.some((msg) => msg.includes('Circular redirect detection')),
+    consoleMessages.some((msg) => msg.includes('circular-redirect')),
   ).toBe(true)
 
   // Clear console messages
@@ -256,7 +278,7 @@ test('circular redirect detection resets after timeout', async ({
 
   // Verify circular redirect was detected again (proving reset worked)
   expect(
-    consoleMessages.some((msg) => msg.includes('Circular redirect detection')),
+    consoleMessages.some((msg) => msg.includes('circular-redirect')),
   ).toBe(true)
 
   await page.close()
@@ -742,31 +764,64 @@ test('iframe navigations do not break navigate-to-original', async ({
 })
 
 // Test convergent/idempotent redirects (A → B → B)
-// This validates the fix for the GitHub issue about "many-to-one" redirects
-// Use case: Redirect all regional subdomains to a specific one (e.g., jp.v2ex.com → us.v2ex.com)
-// Source: ^https://\w+\.v2ex\.com/(.*)
-// Target: https://us.v2ex.com/$1
-// The rule matches both jp.v2ex.com and us.v2ex.com, but us.v2ex.com redirects to itself (idempotent)
-// This should NOT be treated as a circular error - it should simply stop the chain
-;[
-  {
-    from: 'https://jp.v2ex.com/test',
-    to: 'https://us.v2ex.com/test',
-  },
-  {
-    // Idempotent case: us.v2ex.com matches the rule but produces the same URL
-    // This is the convergent redirect - should NOT error
-    from: 'https://us.v2ex.com/test',
-    to: 'https://us.v2ex.com/test',
-  },
-].forEach((testUrl) =>
-  testRule({
-    rule: {
-      from: '^https://\\w+\\.v2ex\\.com/(.*)',
-      mode: 'regex',
-      to: 'https://us.v2ex.com/$1',
-    },
-    from: testUrl.from,
-    to: testUrl.to,
-  }),
-)
+// Simulates "many-to-one" pattern (e.g., jp.v2ex.com → us.v2ex.com)
+// Uses local test server paths instead of external domains to avoid flakiness
+test('convergent redirect: different region redirects to target', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/region-\\w+/(.*)`,
+          mode: 'regex',
+          to: `${testServerUrl}/region-us/$1`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/region-jp/test`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/region-us/test`)
+
+  await page.close()
+})
+
+test('convergent redirect: target region is idempotent (no redirect)', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/region-\\w+/(.*)`,
+          mode: 'regex',
+          to: `${testServerUrl}/region-us/$1`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  // Idempotent case: /region-us/test matches the rule but produces the same URL
+  // This should NOT be treated as a circular error - just stop the chain
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/region-us/test`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/region-us/test`)
+
+  await page.close()
+})
