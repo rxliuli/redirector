@@ -107,9 +107,8 @@ describe('Action', () => {
     rules.set([rule])
     const screen = render(Dataset)
     await screen.getByTitle('Edit').click()
-    await screen.getByTitle('From').fill('https://example.com/from2')
-    await screen.getByTitle('To').fill('https://example.com/new2')
-    await screen.getByTitle('Enabled').click()
+    await screen.getByTitle('Match URL').fill('https://example.com/from2')
+    await screen.getByTitle('Redirect URL').fill('https://example.com/new2')
     await screen.getByTitle('Save').click()
     await expect
       .element(screen.getByText('https://example.com/from2'))
@@ -117,9 +116,6 @@ describe('Action', () => {
     await expect
       .element(screen.getByText('https://example.com/new2'))
       .toBeInTheDocument()
-    await expect
-      .element(screen.getByTitle('Enabled'))
-      .toHaveAttribute('data-state', 'unchecked')
   })
   it('edit rule cancel', async () => {
     const rule: MatchRule = {
@@ -131,7 +127,7 @@ describe('Action', () => {
     rules.set([rule])
     const screen = render(Dataset)
     await screen.getByTitle('Edit').click()
-    await screen.getByTitle('From').fill('https://example.com/from2')
+    await screen.getByTitle('Match URL').fill('https://example.com/from2')
     await screen.getByTitle('Cancel').click()
     await expect
       .element(screen.getByText('https://example.com/from'))
@@ -196,11 +192,11 @@ describe('Action', () => {
     rules.set([rule, rule2])
     const screen = render(Dataset)
     await screen.getByTitle('Edit').nth(0).click()
-    await expect.element(screen.getByTitle('From')).toBeInTheDocument()
+    await expect.element(screen.getByTitle('Match URL')).toBeInTheDocument()
     await expect.element(screen.getByTitle('Save')).toBeInTheDocument()
     await expect.element(screen.getByTitle('Cancel')).toBeInTheDocument()
     await screen.getByTitle('Delete').nth(0).click()
-    await expect.element(screen.getByTitle('From')).not.toBeInTheDocument()
+    await expect.element(screen.getByTitle('Match URL')).not.toBeInTheDocument()
     await expect.element(screen.getByTitle('Save')).not.toBeInTheDocument()
     await expect.element(screen.getByTitle('Cancel')).not.toBeInTheDocument()
   })
@@ -295,7 +291,7 @@ describe('Export and Import', () => {
     rules.set([rule])
     const screen = render(Dataset)
     await screen.getByTitle('Edit').click()
-    expect(screen.getByTitle('From')).toHaveValue(rule.from)
+    expect(screen.getByTitle('Match URL')).toHaveValue(rule.from)
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     await Promise.all([
       commands.waitForUpload({
@@ -306,7 +302,7 @@ describe('Export and Import', () => {
       screen.getByTitle('Import').click(),
     ])
     await expect
-      .element(screen.getByTitle('From', { exact: true }))
+      .element(screen.getByTitle('Match URL'))
       .not.toBeInTheDocument()
     await expect.element(screen.getByText(rule2.from)).toBeInTheDocument()
     const rows = [...document.querySelectorAll('table > tbody > tr')]
@@ -328,10 +324,10 @@ describe('Export and Import', () => {
     rules.set([rule])
     const screen = render(Dataset)
     await screen.getByTitle('Edit').click()
-    expect(screen.getByTitle('From')).toHaveValue(rule.from)
+    expect(screen.getByTitle('Match URL')).toHaveValue(rule.from)
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     await screen.getByTitle('Import').click()
-    await expect.element(screen.getByTitle('From')).toBeInTheDocument()
+    await expect.element(screen.getByTitle('Match URL')).toBeInTheDocument()
     await expect.element(screen.getByText(rule2.from)).not.toBeInTheDocument()
     const rows = [...document.querySelectorAll('table > tbody > tr')]
     expect(rows).length(1)

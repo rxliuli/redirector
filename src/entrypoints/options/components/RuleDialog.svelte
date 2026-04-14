@@ -112,7 +112,7 @@
           onblur={() => {
             formState.from = formState.from.trim()
           }}
-          title="from"
+          title="Match URL"
         />
       </div>
 
@@ -128,7 +128,7 @@
           onblur={() => {
             formState.to = formState.to.trim()
           }}
-          title="to"
+          title="Redirect URL"
         />
       </div>
 
@@ -151,11 +151,11 @@
   {/snippet}
 
   {#snippet footer()}
-    <Button variant="secondary" onclick={onClose}>Cancel</Button>
+    <Button variant="secondary" onclick={onClose} title="Cancel">Cancel</Button>
     <Button
       variant="default"
       disabled={!formState.from || !formState.to}
-      title={!formState.from || !formState.to ? 'Please fill in both fields' : 'Save redirect'}
+      title={!formState.from || !formState.to ? 'Please fill in both fields' : 'Save'}
       onclick={handleSave}
     >
       {index !== undefined ? 'Save' : 'Add'}
