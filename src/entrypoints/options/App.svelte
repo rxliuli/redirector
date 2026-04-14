@@ -28,7 +28,7 @@
     <div class="flex items-center gap-2">
       <span class="text-xl font-bold mr-auto">Redirector</span>
       <DarkMode />
-      <a href="https://discord.gg/jwhvMBTM6G" target="_blank">
+      <a href="https://discord.gg/gFhKUthc88" target="_blank">
         <Button variant="outline" size="icon">
           <svg
             xmlns="http://www.w3.org/2000/svg"
