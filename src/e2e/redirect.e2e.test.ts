@@ -508,6 +508,239 @@ test('preload requests should not trigger redirects', async ({
   await page.close()
 })
 
+// Test navigate-to-original: pressing shortcut navigates back to the original URL
+test('navigate to original page via shortcut', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/original`,
+          mode: 'regex',
+          to: `${testServerUrl}/redirected`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+
+  // Navigate to /original, should be redirected to /redirected
+  await page
+    .goto(`${testServer.url}/original`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/redirected`)
+
+  // Trigger navigate-to-original via service worker
+  await serviceWorker.evaluate(async () => {
+    await (self as any).navigateToOriginal()
+  })
+  await page.waitForTimeout(1000)
+
+  expect(page.url()).toBe(`${testServer.url}/original`)
+
+  await page.close()
+})
+
+// Test that refreshing after navigate-to-original stays on the original page
+test('refresh stays on original after navigate-to-original', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/original`,
+          mode: 'regex',
+          to: `${testServerUrl}/redirected`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+
+  // Navigate and get redirected
+  await page
+    .goto(`${testServer.url}/original`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/redirected`)
+
+  // Go back to original
+  await serviceWorker.evaluate(async () => {
+    await (self as any).navigateToOriginal()
+  })
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/original`)
+
+  // Refresh - should stay on original, not be redirected again
+  await page.reload({ timeout: 5000 }).catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/original`)
+
+  await page.close()
+})
+
+// Test that navigating to a different URL in the same tab clears the skip
+test('different URL in same tab redirects after navigate-to-original', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/original`,
+          mode: 'regex',
+          to: `${testServerUrl}/redirected`,
+        },
+        {
+          from: `${testServerUrl}/source-b`,
+          mode: 'regex',
+          to: `${testServerUrl}/target-b`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+
+  // Navigate and get redirected
+  await page
+    .goto(`${testServer.url}/original`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/redirected`)
+
+  // Go back to original
+  await serviceWorker.evaluate(async () => {
+    await (self as any).navigateToOriginal()
+  })
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/original`)
+
+  // Navigate to a different URL in the same tab - should be redirected normally
+  await page
+    .goto(`${testServer.url}/source-b`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/target-b`)
+
+  await page.close()
+})
+
+// Test that new tab still redirects after navigate-to-original in another tab
+test('new tab still redirects after navigate-to-original', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/original`,
+          mode: 'regex',
+          to: `${testServerUrl}/redirected`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page1 = await context.newPage()
+
+  // Tab 1: navigate and get redirected
+  await page1
+    .goto(`${testServer.url}/original`, { timeout: 5000 })
+    .catch(() => {})
+  await page1.waitForTimeout(1000)
+  expect(page1.url()).toBe(`${testServer.url}/redirected`)
+
+  // Tab 1: go back to original
+  await serviceWorker.evaluate(async () => {
+    await (self as any).navigateToOriginal()
+  })
+  await page1.waitForTimeout(1000)
+  expect(page1.url()).toBe(`${testServer.url}/original`)
+
+  // Tab 2: navigate to same URL - should still redirect
+  const page2 = await context.newPage()
+  await page2
+    .goto(`${testServer.url}/original`, { timeout: 5000 })
+    .catch(() => {})
+  await page2.waitForTimeout(1000)
+  expect(page2.url()).toBe(`${testServer.url}/redirected`)
+
+  await page1.close()
+  await page2.close()
+})
+
+// Test that iframe navigations don't clear the skip record
+// Regression test: pages with iframes (e.g. Google's cookie rotation, YouTube embeds)
+// fire onBeforeNavigate with the same tabId but different URLs.
+// These sub-frame navigations must NOT clear the tabSkippedUrls entry.
+test('iframe navigations do not break navigate-to-original', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/original`,
+          mode: 'regex',
+          to: `${testServerUrl}/redirected`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+
+  // Navigate and get redirected
+  await page
+    .goto(`${testServer.url}/original`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/redirected`)
+
+  // Go back to original (which has iframes loading /iframe-a and /iframe-b)
+  await serviceWorker.evaluate(async () => {
+    await (self as any).navigateToOriginal()
+  })
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/original`)
+
+  // Wait for iframes to load — their onBeforeNavigate events must not clear the skip
+  await page.waitForTimeout(1000)
+
+  // Refresh — should still stay on original, not be redirected again
+  await page.reload({ timeout: 5000 }).catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/original`)
+
+  await page.close()
+})
+
 // Test convergent/idempotent redirects (A → B → B)
 // This validates the fix for the GitHub issue about "many-to-one" redirects
 // Use case: Redirect all regional subdomains to a specific one (e.g., jp.v2ex.com → us.v2ex.com)

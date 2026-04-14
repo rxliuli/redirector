@@ -186,6 +186,65 @@ export function createTestServer(port = 3456) {
     `)
   })
 
+  // Navigate-to-original test pages
+  app.get('/original', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Original Page</title></head>
+        <body>
+          <h1>Original Page (before redirect)</h1>
+          <iframe src="/iframe-a" width="100" height="100"></iframe>
+          <iframe src="/iframe-b" width="100" height="100"></iframe>
+        </body>
+      </html>
+    `)
+  })
+
+  app.get('/iframe-a', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html><body><p>iframe A</p></body></html>
+    `)
+  })
+
+  app.get('/iframe-b', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html><body><p>iframe B</p></body></html>
+    `)
+  })
+
+  app.get('/redirected', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Redirected Page</title></head>
+        <body><h1>Redirected Page (after redirect)</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/source-b', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Source B</title></head>
+        <body><h1>Source B Page</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/target-b', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Target B</title></head>
+        <body><h1>Target B Page</h1></body>
+      </html>
+    `)
+  })
+
   const server = serve({ fetch: app.fetch, port })
 
   return {

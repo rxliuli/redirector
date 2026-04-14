@@ -1,4 +1,4 @@
-import { defineConfig } from 'wxt'
+import { defineConfig, UserManifest } from 'wxt'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -11,7 +11,7 @@ export default defineConfig({
     disabled: true,
   },
   manifest: (env) => {
-    const manifest = {
+    const manifest: UserManifest = {
       name: 'Redirector',
       permissions: ['storage', 'webRequest', 'webNavigation'],
       host_permissions: ['<all_urls>'],
@@ -24,9 +24,16 @@ export default defineConfig({
           '128': 'icon/128.png',
         },
       },
+      commands: {
+        'navigate-to-original': {
+          suggested_key: {
+            default: 'Alt+Shift+O',
+          },
+          description: 'Navigate to original page (before redirect)',
+        },
+      },
     }
     if (env.browser === 'firefox') {
-      // @ts-expect-error
       manifest.browser_specific_settings = {
         gecko: {
           id: 'redirector@rxliuli.com',
@@ -36,7 +43,7 @@ export default defineConfig({
     if (env.browser === 'safari') {
       manifest.name = 'URL Redirector'
       // TODO: https://developer.apple.com/forums/thread/735111
-      manifest.permissions = manifest.permissions.filter(
+      manifest.permissions = manifest.permissions!.filter(
         (permission) => permission !== 'webRequest',
       )
       manifest.permissions.push('tabs')
