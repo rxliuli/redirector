@@ -19,6 +19,6 @@ export function getRedirectUrl(url: string) {
       redirectUrl: r.urls[r.urls.length - 1],
     }
   }
-  console.error(`No matching rule for url: ${url}, status: ${r.status}`)
+  console.debug(`No matching rule for url: ${url}, status: ${r.status}`)
   return {}
 }
