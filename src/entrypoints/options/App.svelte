@@ -27,9 +27,8 @@
   <div class="mb-4">
     <div class="flex items-center gap-2">
       <span class="text-xl font-bold mr-auto">Redirector</span>
-      <DarkMode />
       <a href="https://discord.gg/gFhKUthc88" target="_blank">
-        <Button variant="outline" size="icon">
+        <Button variant="secondary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 640 512"
@@ -39,6 +38,7 @@
               fill="currentColor"
             /></svg
           >
+          <span class="hidden sm:inline">Join Group</span>
         </Button>
       </a>
     </div>

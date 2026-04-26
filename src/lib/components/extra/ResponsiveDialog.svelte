@@ -21,7 +21,7 @@
   interface Props {
     open: boolean
     title: string
-    description?: string
+    description?: string | Snippet
     children: Snippet
     footer?: Snippet
     maxWidth?: string
@@ -56,7 +56,13 @@
       <DrawerHeader>
         <DrawerTitle>{title}</DrawerTitle>
         {#if description}
-          <DrawerDescription>{description}</DrawerDescription>
+          <DrawerDescription>
+            {#if typeof description === 'string'}
+              {description}
+            {:else}
+              {@render description()}
+            {/if}
+          </DrawerDescription>
         {/if}
       </DrawerHeader>
 
@@ -78,7 +84,13 @@
       <DialogHeader>
         <DialogTitle>{title}</DialogTitle>
         {#if description}
-          <DialogDescription>{description}</DialogDescription>
+          <DialogDescription>
+            {#if typeof description === 'string'}
+              {description}
+            {:else}
+              {@render description()}
+            {/if}
+          </DialogDescription>
         {/if}
       </DialogHeader>
 

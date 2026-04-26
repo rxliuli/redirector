@@ -9,6 +9,36 @@
   import RuleCheckResult from './RuleCheckResult.svelte'
   import ResponsiveDialog from '$lib/components/extra/ResponsiveDialog.svelte'
 
+  const templates: { label: string; value: MatchRule & { testUrl: string } }[] = [
+    {
+      label: 'Reddit → Old Reddit',
+      value: {
+        from: '^https://www.reddit.com/(.*)',
+        to: 'https://old.reddit.com/$1',
+        mode: 'regex',
+        testUrl: 'https://www.reddit.com/r/cats',
+      },
+    },
+    {
+      label: 'Google → DuckDuckGo',
+      value: {
+        from: '^https://www.google.com/search\\?q=(.*?)&.*$',
+        to: 'https://duckduckgo.com/?q=$1',
+        mode: 'regex',
+        testUrl: 'https://www.google.com/search?q=js&oq=js',
+      },
+    },
+    {
+      label: 'X/Twitter → Nitter',
+      value: {
+        from: '^https://(x|twitter)\\.com/(.*)',
+        to: 'https://nitter.net/$2',
+        mode: 'regex',
+        testUrl: 'https://x.com/elonmusk/status/2047881966268117064',
+      },
+    },
+  ]
+
   interface Props {
     open: boolean
     rule?: MatchRule
@@ -27,6 +57,7 @@
     mode: 'regex' as MatchRule['mode'],
     enabled: true,
   })
+  let selectedTemplate = $state<string | undefined>(undefined)
   let ruleCheckResult: CheckResult | null = $state(null)
 
   $effect(() => {
@@ -38,7 +69,20 @@
         enabled: rule?.enabled ?? true,
         testUrl: rule?.testUrl ?? '',
       }
+      selectedTemplate = undefined
       ruleCheckResult = null
+    }
+  })
+
+  $effect(() => {
+    if (selectedTemplate) {
+      const template = templates.find((t) => t.label === selectedTemplate)
+      if (template) {
+        formState.from = template.value.from
+        formState.to = template.value.to
+        formState.mode = template.value.mode ?? 'regex'
+        formState.testUrl = template.value.testUrl ?? ''
+      }
     }
   })
 
@@ -80,12 +124,36 @@
 <ResponsiveDialog
   bind:open
   title={index !== undefined ? 'Edit redirect rule' : 'Add redirect rule'}
-  description={index !== undefined
-    ? 'Edit your redirect rule and test it with a URL'
-    : 'Create a new redirect rule and test it with a URL'}
 >
+  {#snippet description()}
+    {#if index !== undefined}
+      Edit your redirect rule and test it with a URL
+    {:else}
+      Create a new redirect rule and test it with a URL.
+      <a
+        href="https://github.com/rxliuli/redirector#quick-start--your-first-rule-in-30-seconds"
+        target="_blank"
+        class="underline text-primary"
+      >
+        Guide
+      </a>
+    {/if}
+  {/snippet}
   {#snippet children()}
     <div class="grid gap-4">
+      <!-- Template Selection (only for new rules) -->
+      {#if index === undefined}
+        <div class="flex flex-col gap-2">
+          <Label>Template</Label>
+          <SelectGroup
+            bind:value={selectedTemplate}
+            options={templates.map((t) => ({ label: t.label, value: t.label }))}
+            placeholder="Start from a template (optional)"
+            class="w-full"
+          />
+        </div>
+      {/if}
+
       <!-- Mode Selection -->
       <div class="flex flex-col gap-2">
         <Label for="mode">Mode</Label>
