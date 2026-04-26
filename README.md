@@ -2,92 +2,92 @@
 
 [Chrome](https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin), [Safari](https://apps.apple.com/cn/app/url-redirector/id6743197230), [Edge](https://microsoftedge.microsoft.com/addons/detail/redirector/jhdjcofnjfeljeekjklhgfmfocfgibmm), [Firefox](https://addons.mozilla.org/en-US/firefox/addon/redirector-url/)
 
-## Introduction
+## What does Redirector do?
 
-Redirector is a powerful and flexible browser extension that allows users to customize URL redirection rules. Using regular expressions, users can create complex redirection rules applicable to various websites and URL patterns.
+Redirector automatically redirects URLs from one site to another based on rules you set up. Once a rule is active, every time you visit a matching URL, you'll be instantly sent to the destination you configured — no extra clicks needed.
 
-## Key Features
+**Common use cases:**
 
-- Create custom redirection rules using regular expressions
-- Support for multiple redirection rules
-- Real-time URL match testing
-- Intuitive user interface for easy addition, editing, and deletion of rules
-- Support for wildcards and complex URL patterns
+- Always use Old Reddit instead of the redesign
+- Switch Google search results to DuckDuckGo
+- Skip tracking redirects (e.g. email click-tracking links) and go straight to the destination
+- Redirect a deprecated internal tool URL to its replacement
 
-## Installation
+## Quick Start — Your first rule in 30 seconds
 
-Install from the Chrome Web Store.
+Let's set up a rule that automatically redirects `reddit.com` to `old.reddit.com`:
 
-## How to Use
+1. Click the Redirector icon in your browser toolbar — the options page will open
+2. Click **Add Rule**
+3. Fill in the two fields:
+   - **Match URL:** `^https://www.reddit.com/(.*)`
+   - **Redirect To:** `https://old.reddit.com/$1`
+4. (Optional) Paste a test URL like `https://www.reddit.com/r/cats` to verify the result — you should see it redirect to `https://old.reddit.com/r/cats`
+5. Click **Add** — done!
 
-1. Click on the Redirector icon in the browser toolbar to open the options page
-2. In the "Add a redirect URL" section:
-   - Enter the source URL pattern (using regular expression) in the left input box
-   - Enter the target URL in the right input box (you can use $1, $2, etc., to reference capture groups in the regular expression)
-   - Click the "Add" button to add a new rule
-3. You can test your redirection rules in the "Test URL" section
-4. Added rules will be displayed in the "Rules" list, where you can delete unnecessary rules at any time
+Now visit any `reddit.com` page and you'll be automatically redirected to `old.reddit.com`.
 
-## Example Rule
+### How the pattern works
 
-### Regular Expression Mode
+- `^https://www.reddit.com/` matches the beginning of any Reddit URL
+- `(.*)` captures everything after the domain (e.g. `r/cats`)
+- `$1` in the Redirect To field inserts that captured part into the new URL
 
-Regular expression is a powerful tool for matching URL patterns. Here are some examples:
+That's the basic idea: **match a URL, capture the parts you need, and build a new URL with them.**
 
-- Redirect an entire domain to another (e.g. reddit.com to old.reddit.com):
-  - From: `^https://www.reddit.com/(.*)`
-  - To: `https://old.reddit.com/$1`
+## Managing Rules
 
-- Redirect Google search to DuckDuckGo:
-  - From: `^https://www.google.com/search\?q=(.*?)&.*$`
-  - To: `https://duckduckgo.com/?q=$1`
+- **Enable / Disable** — Toggle individual rules on or off without deleting them
+- **Reorder** — Rules are checked from top to bottom; drag to change priority
+- **Test** — Paste any URL in the Test URL field to see which rule matches and where it redirects
+- **Import / Export** — Back up your rules as a JSON file, or share them with others
 
-- Decode URL-encoded redirect links:
-  - From: `https://click.redditmail.com/CL0/(.*)`
-  - To: `{{$1|decodeURIComponent}}`
+## More Examples
 
-- Decode base64-encoded URLs:
-  - From: `https://mail.yandex.ru/re.jsx\?.*&l=(.*)`
-  - To: `{{$1|atob}}`
+### Redirect Google search to DuckDuckGo
 
-- Chain multiple transformations:
-  - From: `https://example.com/redirect\?data=(.*)`
-  - To: `{{$1|atob|decodeURIComponent}}`
+- Match URL: `^https://www.google.com/search\?q=(.*?)&.*$`
+- Redirect To: `https://duckduckgo.com/?q=$1`
 
-### URL Pattern Mode
+### Skip email click-tracking redirects
 
-URLPattern is a more powerful and flexible tool for matching URL patterns. Here are some examples:
+- Match URL: `https://click.redditmail.com/CL0/(.*)`
+- Redirect To: `{{$1|decodeURIComponent}}`
+
+The `{{$1|decodeURIComponent}}` syntax decodes the URL-encoded destination so you go straight to the real link.
+
+### Decode base64-encoded redirect URLs
+
+- Match URL: `https://mail.yandex.ru/re.jsx\?.*&l=(.*)`
+- Redirect To: `{{$1|atob}}`
+
+## Advanced: URL Pattern Mode
+
+In addition to regular expressions, Redirector supports [URL Pattern](https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/URLPattern) mode — a more readable syntax for matching URLs. Select "URL Pattern" in the Mode dropdown when creating a rule.
 
 - Redirect Google search to DuckDuckGo:
   - From: `https://www.google.com/search?q=:id&(.*)`
   - To: `https://duckduckgo.com/?q={{search.groups.id|decodeURIComponent}}`
 
-- Decode URL parameters:
+- Decode URL parameters (e.g. Zhihu outbound links):
   - From: `https://link.zhihu.com/?target=:url`
   - To: `{{search.groups.url|decodeURIComponent}}`
 
-- Base64 decode and URL decode:
-  - From: `https://redirect.example.com/go/:encoded`
-  - To: `{{pathname.groups.encoded|atob|decodeURIComponent}}`
+## Advanced: Pipeline Syntax
 
-Reference: <https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/URLPattern>
+The `{{}}` syntax supports chaining transformations on captured values:
 
-### Pipeline Syntax
+| Pipeline             | What it does                             |
+| -------------------- | ---------------------------------------- |
+| `decodeURIComponent` | Decode URL-encoded strings (`%2F` → `/`) |
+| `atob`               | Decode base64-encoded strings            |
 
-The `{{}}` syntax supports pipeline transformations for processing captured values:
+**Examples:**
 
-**Available Pipelines:**
+- Single: `{{$1|decodeURIComponent}}`
+- Chained: `{{$1|atob|decodeURIComponent}}`
 
-- `decodeURIComponent` - Decode URL-encoded strings
-- `atob` - Decode base64-encoded strings
-
-**Syntax:**
-
-- Single pipeline: `{{$1|decodeURIComponent}}`
-- Multiple pipelines: `{{$1|atob|decodeURIComponent}}`
-- With spaces: `{{ $1 | atob | decodeURIComponent }}`
-
-**Note:** The traditional `$1`, `$2` syntax (without `{{}}`) does not support pipelines. Use `{{$1}}` syntax for pipeline support.
+**Note:** The plain `$1` syntax does not support pipelines. Use `{{$1}}` when you need transformations.
 
 ## Privacy
 
