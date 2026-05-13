@@ -2,7 +2,7 @@
   "name": "redirector",
   "description": "Dynamic URL Redirector",
   "private": true,
-  "version": "0.16.6",
+  "version": "0.16.7",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -63,6 +63,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "publish-browser-extension": "^4.0.5"
+    }
   }
 }
