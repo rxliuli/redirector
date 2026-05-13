@@ -2,7 +2,7 @@
   "name": "redirector",
   "description": "Dynamic URL Redirector",
   "private": true,
-  "version": "0.16.5",
+  "version": "0.16.6",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -43,7 +43,7 @@
     "vite-node": "^5.2.0",
     "vitest": "^4.0.15",
     "vitest-browser-svelte": "^2.0.1",
-    "wxt": "^0.20.11",
+    "wxt": "^0.20.25",
     "zx": "^8.8.5"
   },
   "dependencies": {
