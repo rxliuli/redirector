@@ -284,6 +284,65 @@ test('circular redirect detection resets after timeout', async ({
   await page.close()
 })
 
+// Test detection of server-side bounce-back loops.
+// Issue: https://github.com/rxliuli/redirector/issues/29
+// Scenario: extension redirects A→B, but the server 302s B back to A.
+// Without cross-call loop detection, handleRedirect would fire on A forever.
+test('prevent server-side bounce-back redirect loops', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  // Rule: /bounce-source → /bounce-target
+  // Server: /bounce-target 302s back to /bounce-source (the loop)
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/bounce-source`,
+          mode: 'regex',
+          to: `${testServerUrl}/bounce-target`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const consoleMessages: string[] = []
+  serviceWorker.on('console', (msg) => {
+    consoleMessages.push(msg.text())
+  })
+
+  const page = await context.newPage()
+
+  await page
+    .goto(`${testServer.url}/bounce-source`, { timeout: 8000 })
+    .catch(() => {
+      // Expected ERR_ABORTED while the loop is in progress
+    })
+
+  // Wait long enough for the loop to be detected and the page to settle.
+  await page.waitForTimeout(2500)
+
+  // After detection, the navigation chain stops; the page should rest on one
+  // of the two URLs rather than hanging or hitting ERR_TOO_MANY_REDIRECTS.
+  expect([
+    `${testServer.url}/bounce-source`,
+    `${testServer.url}/bounce-target`,
+  ]).toContain(page.url())
+
+  // Verify the extension actually triggered loop detection (not just lucky timing)
+  expect(
+    consoleMessages.some((msg) => msg.includes('redirect-loop detected')),
+  ).toBe(true)
+
+  await page.close()
+
+  // Allow the per-(tab,url) counter window to lapse before the next test
+  await context.pages()[0].waitForTimeout(3500)
+})
+
 // Test multiple rules chaining redirects (like Reddit email link cleanup)
 // This test validates that intermediate redirects are computed internally by the extension
 // and do NOT appear in browser history. Only the initial URL and final destination are recorded.

@@ -257,6 +257,23 @@ export function createTestServer(port = 3456) {
     `)
   })
 
+  // Server-side bounce-back loop test (issue #29).
+  // /bounce-target unconditionally 302s back to /bounce-source, simulating
+  // Tumblr's behavior where the subdomain post URL bounces back to www.
+  app.get('/bounce-source', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Bounce Source</title></head>
+        <body><h1>Bounce Source</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/bounce-target', (c) => {
+    return c.redirect('/bounce-source', 302)
+  })
+
   // Convergent/idempotent redirect test (many-to-one pattern)
   app.get('/region-:region/:path', (c) => {
     const region = c.req.param('region')

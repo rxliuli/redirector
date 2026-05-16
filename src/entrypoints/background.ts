@@ -17,6 +17,30 @@ export default defineBackground(() => {
   // Track which tab+URL combos should skip redirection
   const tabSkippedUrls = new Map<number, string>()
 
+  // Detect cross-call redirect loops where the extension redirects A→B but the
+  // server 302s B back to A, causing handleRedirect to fire on A again.
+  // checkRuleChain only catches loops within a single getRedirectUrl call, so
+  // this counter is needed for server-bounce cases. See issue #29.
+  const LOOP_WINDOW_MS = 3000
+  const LOOP_THRESHOLD = 3
+  const redirectCounters = new Map<
+    string,
+    { count: number; timestamp: number }
+  >()
+
+  function isLoopingRedirect(tabId: number, url: string): boolean {
+    const key = `${tabId}|${url}`
+    const entry = redirectCounters.get(key)
+    const now = Date.now()
+    if (!entry || now - entry.timestamp > LOOP_WINDOW_MS) {
+      redirectCounters.set(key, { count: 1, timestamp: now })
+      return false
+    }
+    entry.count++
+    entry.timestamp = now
+    return entry.count >= LOOP_THRESHOLD
+  }
+
   function handleRedirect(
     details: { tabId: number; url?: string; frameId?: number },
     source?: string,
@@ -49,6 +73,12 @@ export default defineBackground(() => {
     }
     const { redirectUrl } = getRedirectUrl(details.url)
     if (!redirectUrl) {
+      return {}
+    }
+    if (isLoopingRedirect(details.tabId, details.url)) {
+      console.warn(
+        `[handleRedirect] redirect-loop detected (tab=${details.tabId}, url=${details.url}, source=${source}) — suppressing redirect to ${redirectUrl}`,
+      )
       return {}
     }
     console.log(
@@ -145,6 +175,12 @@ export default defineBackground(() => {
   browser.tabs.onRemoved.addListener((tabId) => {
     tabOriginalUrls.delete(tabId)
     tabSkippedUrls.delete(tabId)
+    const prefix = `${tabId}|`
+    for (const key of redirectCounters.keys()) {
+      if (key.startsWith(prefix)) {
+        redirectCounters.delete(key)
+      }
+    }
   })
 
   browser.action.onClicked.addListener(async () => {

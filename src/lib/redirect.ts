@@ -3,13 +3,6 @@ import { MatchRule } from './url'
 
 export const store = {
   rules: [] as MatchRule[],
-  redirected: new Map<
-    string,
-    {
-      count: number
-      timestamp: number
-    }
-  >(),
 }
 
 export function getRedirectUrl(url: string) {
