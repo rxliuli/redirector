@@ -28,6 +28,32 @@ const pipeFunctions: Record<string, (value: string) => string> = {
       return value
     }
   },
+  upper: (value: string) => {
+    try {
+      if(typeof value !== 'string'){
+        value = String(value);
+      }
+      if(typeof value === 'string'){
+        return value.toUpperCase();
+      }
+      return value;
+    } catch {
+      return value
+    }
+  },
+  lower: (value: string) => {
+    try {
+      if(typeof value !== 'string'){
+        value = String(value);
+      }
+      if(typeof value === 'string'){
+        return value.toLowerCase();
+      }
+      return value;
+    } catch {
+      return value
+    }
+  },
 }
 
 function templateReplace(

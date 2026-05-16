@@ -304,6 +304,39 @@ describe('url-pattern', () => {
     const r = matchRule(rule, url)
     expect(r.url).eq('https://www.youtube.com/watch?v=test123')
   })
+  it('should support btoa pipeline in url-pattern mode', () => {
+    const rawUrl = 'https://www.youtube.com/watch?v=test123'
+    const url = `https://mail.example.com/redirect?link=${rawUrl}`
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://example.com',
+      to: '{{ search.groups.rawLink | btoa }}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq(btoa('https://www.youtube.com/watch?v=test123'))
+  })
+  it('should support lower pipeline in url-pattern mode', () => {
+    const test = 'ABC'
+    const url = `https://mail.example.com/redirect?param=${test}`
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://mail.example.com/redirect?param=:test',
+      to: '{{ search.groups.test | lower }}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq(test.toLowerCase())
+  })
+  it('should support upper pipeline in url-pattern mode', () => {
+    const test = 'ABC'
+    const url = `https://mail.example.com/redirect?param=${test}`
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://mail.example.com/redirect?param=:test',
+      to: '{{ search.groups.test | upper }}',
+    }
+    const r = matchRule(rule, url)
+    expect(r.url).eq(test.toUpperCase())
+  })
   it('should support multiple pipelines in url-pattern mode', () => {
     const originalUrl = 'https://www.example.com/page?test=value'
     const encodedData = btoa(encodeURIComponent(originalUrl))

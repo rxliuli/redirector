@@ -81,6 +81,9 @@ The `{{}}` syntax supports chaining transformations on captured values:
 | -------------------- | ---------------------------------------- |
 | `decodeURIComponent` | Decode URL-encoded strings (`%2F` → `/`) |
 | `atob`               | Decode base64-encoded strings            |
+| `btoa`               | Encode ASCII string with base64          |
+| `upper`              | convert string to upper case             |
+| `lower`              | convert string to lower case             |
 
 **Examples:**
 
