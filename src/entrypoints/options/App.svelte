@@ -5,6 +5,7 @@
   import DarkMode from './components/DarkMode.svelte'
   import { Button } from '$lib/components/ui/button'
   import { Toaster } from '$lib/components/ui/sonner'
+  import { ExternalLinkIcon } from '@lucide/svelte'
   import { rules } from './store'
   import { toast } from 'svelte-sonner'
   import type { MatchRule } from '$lib/url'
@@ -26,7 +27,18 @@
 <div class="container mx-auto p-2 md:p-4">
   <div class="mb-4">
     <div class="flex items-center gap-2">
-      <span class="text-xl font-bold mr-auto">Redirector</span>
+      <div class="mr-auto">
+        <span class="text-xl font-bold">Redirector</span>
+        <a
+          href="https://store.rxliuli.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ExternalLinkIcon class="h-3.5 w-3.5" />
+          Explore our other extensions
+        </a>
+      </div>
       <a href="https://discord.gg/gFhKUthc88" target="_blank">
         <Button variant="secondary">
           <svg
