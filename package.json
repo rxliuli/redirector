@@ -47,7 +47,7 @@
     "zx": "^8.8.5"
   },
   "dependencies": {
-    "@playwright/test": "^1.57.0",
+    "@playwright/test": "^1.60.0",
     "bits-ui": "^2.14.4",
     "clsx": "^2.1.1",
     "es-toolkit": "^1.42.0",
