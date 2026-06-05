@@ -2,7 +2,7 @@
   "name": "redirector",
   "description": "Dynamic URL Redirector",
   "private": true,
-  "version": "0.16.9",
+  "version": "0.16.10",
   "type": "module",
   "scripts": {
     "dev": "wxt",
