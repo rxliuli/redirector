@@ -287,6 +287,122 @@ export function createTestServer(port = 3456) {
     `)
   })
 
+  // Regex anchor test: simulate YouTube-like "redirect homepage to feed" rule
+  app.get('/site', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Site Home</title></head>
+        <body><h1>Site Home (no trailing slash)</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/site/feed', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Site Feed</title></head>
+        <body><h1>Site Feed</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/site/page', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Site Page</title></head>
+        <body><h1>Site Page (should not redirect)</h1></body>
+      </html>
+    `)
+  })
+
+  // Page whose iframe src matches a redirect rule — the main frame must NOT redirect
+  app.get('/page-with-matching-iframe', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Page with Matching Iframe</title></head>
+        <body>
+          <h1>Host page (should stay here)</h1>
+          <iframe src="/iframe-redirect-target" width="100" height="100"></iframe>
+        </body>
+      </html>
+    `)
+  })
+
+  app.get('/iframe-redirect-target', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html><body><p>iframe content</p></body></html>
+    `)
+  })
+
+  app.get('/iframe-redirected', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html><body><p>iframe redirected</p></body></html>
+    `)
+  })
+
+  // Speculation Rules prefetch + 302 test: simulates Google Search prefetching
+  // an Instagram URL that 302-redirects to a login page
+  app.get('/page-with-speculation', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Search Results</title>
+          <script type="speculationrules">
+          {
+            "prefetch": [{
+              "urls": ["/speculation-target"]
+            }]
+          }
+          </script>
+        </head>
+        <body>
+          <h1>Search results (should stay here)</h1>
+          <a href="/speculation-target">Result link</a>
+        </body>
+      </html>
+    `)
+  })
+
+  let speculationTargetHit = false
+
+  app.get('/speculation-target', (c) => {
+    speculationTargetHit = true
+    return c.redirect('/speculation-login', 302)
+  })
+
+  app.get('/speculation-target-hit', (c) => {
+    const hit = speculationTargetHit
+    speculationTargetHit = false
+    return c.json({ hit })
+  })
+
+  app.get('/speculation-login', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Login</title></head>
+        <body><h1>Login page</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/speculation-redirected', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Redirected</title></head>
+        <body><h1>Redirected (should not reach)</h1></body>
+      </html>
+    `)
+  })
+
   const server = serve({ fetch: app.fetch, port })
 
   return {

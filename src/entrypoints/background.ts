@@ -93,15 +93,22 @@ export default defineBackground(() => {
   const confirmedNavigations = new Set<string>()
 
   browser.webNavigation.onBeforeNavigate.addListener(async (details) => {
+    if (details.frameId !== 0) return
     const key = `${details.tabId}|${details.url}`
     confirmedNavigations.add(key)
     handleRedirect(details, 'onBeforeNavigate')
   })
   if (!import.meta.env.SAFARI) {
+    // Track requestIds of confirmed navigations so that server-side redirects
+    // (302) only propagate confirmation for real navigations, not prefetches.
+    const confirmedRequestIds = new Set<string>()
+
     // fixed: https://discord.com/channels/1376360845344374784/1380033039681196102/1445806872790696067
     browser.webRequest.onBeforeRedirect.addListener(
       (details) => {
-        // console.log('onBeforeRedirect', details.redirectUrl)
+        if (!confirmedRequestIds.has(details.requestId)) {
+          return
+        }
         const key = `${details.tabId}|${details.redirectUrl}`
         confirmedNavigations.add(key)
       },
@@ -116,12 +123,27 @@ export default defineBackground(() => {
           return {}
         }
         confirmedNavigations.delete(key)
-        return handleRedirect(details, 'onBeforeRequest')
+        const result = handleRedirect(details, 'onBeforeRequest')
+        if (result.redirectUrl) {
+          confirmedRequestIds.delete(details.requestId)
+        } else {
+          confirmedRequestIds.add(details.requestId)
+        }
+        return result
       },
+      { urls: ['<all_urls>'], types: ['main_frame'] },
+    )
+    browser.webRequest.onCompleted.addListener(
+      (details) => confirmedRequestIds.delete(details.requestId),
+      { urls: ['<all_urls>'], types: ['main_frame'] },
+    )
+    browser.webRequest.onErrorOccurred.addListener(
+      (details) => confirmedRequestIds.delete(details.requestId),
       { urls: ['<all_urls>'], types: ['main_frame'] },
     )
     // TODO: https://developer.apple.com/documentation/safariservices/assessing-your-safari-web-extension-s-browser-compatibility#:~:text=onHistoryStateUpdated
     browser.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
+      if (details.frameId !== 0) return
       handleRedirect(details, 'onHistoryStateUpdated')
     })
   } else {

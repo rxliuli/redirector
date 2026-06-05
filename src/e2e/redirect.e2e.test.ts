@@ -1,48 +1,6 @@
 import { MatchRule } from '$lib/url'
 import { test, expect, BrowserTestContext } from './fixtures'
 
-interface RedirectRule {
-  rule: MatchRule
-  from: string
-  to: string
-}
-
-function testRule(options: RedirectRule, only?: boolean) {
-  const testFn = only ? test.only : test
-  testFn(
-    `redirect rule: ${options.from} -> ${options.to}`,
-    async ({ serviceWorker, context }) => {
-      // Set up redirect rule: Google Search -> DuckDuckGo
-      await serviceWorker.evaluate(async (rule) => {
-        await chrome.storage.sync.set({
-          rules: [rule] satisfies MatchRule[],
-        })
-      }, options.rule)
-
-      // Wait for storage change event to propagate to background script
-      await context.pages()[0].waitForTimeout(500)
-
-      // Navigate to test pages
-      // Note: The redirect will abort the original request, throwing an ERR_ABORTED error
-      const { from, to } = options
-
-      const page = await context.newPage()
-
-      await page.goto(from, { timeout: 5000 }).catch(() => {
-        // Expected ERR_ABORTED error when redirect happens, ignore it
-      })
-
-      // Wait for redirect to complete
-      await page.waitForTimeout(1000)
-
-      // Verify successful redirect
-      expect(page.url()).toEqual(to)
-
-      await page.close()
-    },
-  )
-}
-
 // Test regex capture group redirect with query params (local server, no external dependency)
 test('redirect with regex capture groups on query params', async ({
   serviceWorker,
@@ -74,30 +32,46 @@ test('redirect with regex capture groups on query params', async ({
 
   await page.close()
 })
-;[
-  {
-    from: 'https://www.youtube.com',
-    to: 'https://www.youtube.com/feed/you',
-  },
-  {
-    from: 'https://www.youtube.com/',
-    to: 'https://www.youtube.com/feed/you',
-  },
-  {
-    from: 'https://www.youtube.com/watch?v=cIlghWDd7RU',
-    to: 'https://www.youtube.com/watch?v=cIlghWDd7RU',
-  },
-].forEach((testUrl) =>
-  testRule({
-    rule: {
-      from: 'https://www.youtube.com/?$',
-      mode: 'regex',
-      to: 'https://www.youtube.com/feed/you',
-    },
-    from: testUrl.from,
-    to: testUrl.to,
-  }),
-)
+// Regex anchor redirect: homepage (with/without trailing slash) → feed,
+// but deeper paths must not match. Mirrors the YouTube homepage-redirect use case.
+for (const { suffix, shouldRedirect } of [
+  { suffix: '', shouldRedirect: true },
+  { suffix: '/', shouldRedirect: true },
+  { suffix: '/page', shouldRedirect: false },
+]) {
+  test(`regex anchor redirect: /site${suffix} → ${shouldRedirect ? '/site/feed' : 'no redirect'}`, async ({
+    serviceWorker,
+    context,
+    testServer,
+  }) => {
+    await serviceWorker.evaluate(async (testServerUrl) => {
+      await chrome.storage.sync.set({
+        rules: [
+          {
+            from: `${testServerUrl}/site/?$`,
+            mode: 'regex',
+            to: `${testServerUrl}/site/feed`,
+          },
+        ] satisfies MatchRule[],
+      })
+    }, testServer.url)
+
+    await context.pages()[0].waitForTimeout(500)
+
+    const page = await context.newPage()
+    await page
+      .goto(`${testServer.url}/site${suffix}`, { timeout: 5000 })
+      .catch(() => {})
+    await page.waitForTimeout(1000)
+
+    const expected = shouldRedirect
+      ? `${testServer.url}/site/feed`
+      : `${testServer.url}/site${suffix}`
+    expect(page.url()).toBe(expected)
+
+    await page.close()
+  })
+}
 
 // Test with local test server to avoid Google's bot detection
 // This test validates the fix for handling extension redirects after website 302 redirections
@@ -818,6 +792,93 @@ test('iframe navigations do not break navigate-to-original', async ({
   await page.reload({ timeout: 5000 }).catch(() => {})
   await page.waitForTimeout(1000)
   expect(page.url()).toBe(`${testServer.url}/original`)
+
+  await page.close()
+})
+
+// Test that iframe navigations matching a redirect rule do NOT redirect the tab.
+// Regression: onBeforeNavigate fires for all frames; if a sub-frame URL matches
+// a rule the extension must not call tabs.update on the parent tab.
+// Related: https://github.com/rxliuli/redirector/issues/19
+test('iframe matching a redirect rule should not redirect the parent tab', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/iframe-redirect-target`,
+          mode: 'regex',
+          to: `${testServerUrl}/iframe-redirected`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+
+  // Navigate to a page whose iframe src matches the redirect rule
+  await page.goto(`${testServer.url}/page-with-matching-iframe`, {
+    timeout: 5000,
+  })
+
+  // Wait for iframe to load and any potential redirect to fire
+  await page.waitForTimeout(1500)
+
+  // The main frame must remain on the host page
+  expect(page.url()).toBe(`${testServer.url}/page-with-matching-iframe`)
+
+  await page.close()
+})
+
+// Test that Speculation Rules prefetch with server-side 302 does NOT redirect
+// the tab. Reproduces the real-world scenario: Google Search uses Speculation
+// Rules to prefetch an Instagram URL; Instagram 302-redirects to a login page;
+// onBeforeRedirect must not propagate "confirmed" status to the login URL.
+// Related: https://github.com/rxliuli/redirector/issues/19
+test('speculation rules prefetch with 302 should not redirect the tab', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  // Rule matches the 302 redirect target (login page)
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/speculation-login`,
+          mode: 'regex',
+          to: `${testServerUrl}/speculation-redirected`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+
+  await page.goto(`${testServer.url}/page-with-speculation`, { timeout: 5000 })
+
+  // Wait for speculation prefetch + 302 to complete
+  await page.waitForTimeout(2000)
+
+  // Tab must stay on the original page
+  expect(page.url()).toBe(`${testServer.url}/page-with-speculation`)
+
+  // Verify the prefetch actually hit the server; if Speculation Rules are not
+  // supported in this browser, skip instead of false-passing
+  const { hit } = await page.evaluate(async (url) => {
+    const res = await fetch(`${url}/speculation-target-hit`)
+    return res.json() as Promise<{ hit: boolean }>
+  }, testServer.url)
+  if (!hit) {
+    test.skip()
+  }
 
   await page.close()
 })
