@@ -84,6 +84,31 @@ describe('checkRule', () => {
       'https://a.com/test',
     ])
   })
+  it('disabled rule is skipped', () => {
+    const rules: MatchRule[] = [
+      {
+        from: '^https://example.com/(.*)',
+        to: 'https://other.com/$1',
+        enabled: false,
+      },
+    ]
+    const result = checkRuleChain(rules, 'https://example.com/page')
+    expect(result).toEqual({ status: 'not-matched', urls: [] })
+  })
+
+  it('editing a disabled rule: test should use enabled override', () => {
+    const disabledRule: MatchRule = {
+      from: '^https://example.com/(.*)',
+      to: 'https://other.com/$1',
+      enabled: false,
+    }
+    const enabledCopy = { ...disabledRule, enabled: true }
+    const result = checkRuleChain([enabledCopy], 'https://example.com/page')
+    expect(result).toEqual({
+      status: 'matched',
+      urls: ['https://other.com/page'],
+    })
+  })
 })
 
 describe('Real-world', () => {

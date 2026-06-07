@@ -91,7 +91,7 @@
       const currentRule = {
         from: formState.from.trim(),
         to: formState.to.trim(),
-        enabled: formState.enabled,
+        enabled: true,
         mode: formState.mode,
       }
       const tempRules =
