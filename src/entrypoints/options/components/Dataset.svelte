@@ -66,6 +66,21 @@
     toast.success('Rule deleted')
   }
 
+  function deleteAllRules() {
+    if (!$rules.length) {
+      return
+    }
+    const confirmDelete = globalThis.confirm
+      ? globalThis.confirm('Delete all rules? This action cannot be undone.')
+      : true
+    if (!confirmDelete) {
+      return
+    }
+    $rules = []
+    editDialog = { open: false }
+    toast.success('All rules deleted')
+  }
+
   function exportRules() {
     const json = JSON.stringify($rules, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
@@ -100,6 +115,15 @@
 <div class="flex items-center justify-between gap-2 mb-4">
   <h2 class="text-lg font-bold mr-auto">Rules</h2>
   <Button size="sm" onclick={onAddRule} title="Add Rule">Add Rule</Button>
+  <Button
+    variant="destructive"
+    size="sm"
+    onclick={deleteAllRules}
+    title="Wipe Rules"
+    disabled={$rules.length === 0}
+  >
+    Delete All
+  </Button>
   <Button variant="secondary" size="sm" onclick={exportRules} title="Export">
     Export
   </Button>
