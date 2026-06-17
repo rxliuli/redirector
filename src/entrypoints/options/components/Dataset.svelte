@@ -9,6 +9,7 @@
     ChevronUp,
     SquarePenIcon,
     TrashIcon,
+    EllipsisVertical
   } from '@lucide/svelte'
   import {
     Table,
@@ -127,12 +128,13 @@
     <DropdownMenu.Trigger>
       <Button
         variant="secondary"
-        size="sm"
+        size="icon"
         title="Actions"
+        aria-label="Actions"
         aria-haspopup="menu"
         aria-expanded={actionsMenuOpen}
       >
-        Actions
+        <EllipsisVertical class="h-4 w-4" />
       </Button>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content class="w-40" sideOffset={8}>
