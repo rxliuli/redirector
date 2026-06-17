@@ -33,6 +33,13 @@
     index?: number
     rule?: MatchRule
   }>({ open: false })
+  let actionsMenuOpen = $state(false)
+  function handleActionsFocusOut({ relatedTarget, currentTarget }) {
+        if (relatedTarget instanceof HTMLElement && currentTarget.contains(relatedTarget)) {
+          return // check if the new focus target doesn't present in the dropdown tree
+        }
+        actionsMenuOpen = false
+  }
 
   function sortRules(upOrDown: string, index: number) {
     if (upOrDown == 'up') {
@@ -78,6 +85,7 @@
     }
     $rules = []
     editDialog = { open: false }
+    actionsMenuOpen = false
     toast.success('All rules deleted')
   }
 
@@ -88,7 +96,11 @@
     const a = document.createElement('a')
     a.href = url
     a.download = `Redirector-${new Date().toISOString()}.json`
+    document.body.appendChild(a)
     a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    actionsMenuOpen = false
     toast.success('Exported rules')
   }
 
@@ -105,6 +117,7 @@
           rule.enabled = rule.enabled ?? true
           return rule
         })
+        actionsMenuOpen = false
         toast.success('Imported rules')
       }
     }
@@ -115,21 +128,58 @@
 <div class="flex items-center justify-between gap-2 mb-4">
   <h2 class="text-lg font-bold mr-auto">Rules</h2>
   <Button size="sm" onclick={onAddRule} title="Add Rule">Add Rule</Button>
-  <Button
-    variant="destructive"
-    size="sm"
-    onclick={deleteAllRules}
-    title="Wipe Rules"
-    disabled={$rules.length === 0}
-  >
-    Delete All
-  </Button>
-  <Button variant="secondary" size="sm" onclick={exportRules} title="Export">
-    Export
-  </Button>
-  <Button variant="secondary" size="sm" onclick={importRules} title="Import">
-    Import
-  </Button>
+  <div class="relative" onfocusout={handleActionsFocusOut}>
+    <Button
+      variant="secondary"
+      size="sm"
+      onclick={() => {
+        actionsMenuOpen = !actionsMenuOpen
+      }}
+      title="Actions"
+      aria-haspopup="menu"
+      aria-expanded={actionsMenuOpen}
+    >
+      Actions
+    </Button>
+    {#if actionsMenuOpen}
+      <div
+        class="absolute right-0 mt-2 z-20 min-w-40 rounded-md border bg-background p-1 shadow-md"
+        role="menu"
+      >
+        <Button
+          class="w-full justify-start"
+          variant="ghost"
+          size="sm"
+          onclick={exportRules}
+          title="Export"
+          role="menuitem"
+        >
+          Export
+        </Button>
+        <Button
+          class="w-full justify-start"
+          variant="ghost"
+          size="sm"
+          onclick={importRules}
+          title="Import"
+          role="menuitem"
+        >
+          Import
+        </Button>
+        <Button
+          class="w-full justify-start"
+          variant="ghost"
+          size="sm"
+          onclick={deleteAllRules}
+          title="Wipe Rules"
+          disabled={$rules.length === 0}
+          role="menuitem"
+        >
+          Delete All
+        </Button>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <Table class="table-fixed w-full min-w-4xl">
