@@ -200,6 +200,7 @@ describe('Action', () => {
     await screen.getByTitle('Wipe Rules').click()
     await expect.element(screen.getByText(rule.from)).toBeInTheDocument()
     await expect.element(screen.getByText(rule2.from)).toBeInTheDocument()
+    await screen.getByTitle('Actions').click()
     await expect.element(screen.getByTitle('Wipe Rules')).toBeEnabled()
   })
   it('delete rule on edit', async () => {
