@@ -2,6 +2,7 @@
   import { rules } from '../store'
   import { Button } from '$lib/components/ui/button'
   import { Checkbox } from '$lib/components/ui/checkbox'
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
   import {
     CheckIcon,
     ChevronDown,
@@ -34,12 +35,6 @@
     rule?: MatchRule
   }>({ open: false })
   let actionsMenuOpen = $state(false)
-  function handleActionsFocusOut({ relatedTarget, currentTarget }) {
-        if (relatedTarget instanceof HTMLElement && currentTarget.contains(relatedTarget)) {
-          return // check if the new focus target doesn't present in the dropdown tree
-        }
-        actionsMenuOpen = false
-  }
 
   function sortRules(upOrDown: string, index: number) {
     if (upOrDown == 'up') {
@@ -128,58 +123,31 @@
 <div class="flex items-center justify-between gap-2 mb-4">
   <h2 class="text-lg font-bold mr-auto">Rules</h2>
   <Button size="sm" onclick={onAddRule} title="Add Rule">Add Rule</Button>
-  <div class="relative" onfocusout={handleActionsFocusOut}>
-    <Button
-      variant="secondary"
-      size="sm"
-      onclick={() => {
-        actionsMenuOpen = !actionsMenuOpen
-      }}
-      title="Actions"
-      aria-haspopup="menu"
-      aria-expanded={actionsMenuOpen}
-    >
-      Actions
-    </Button>
-    {#if actionsMenuOpen}
-      <div
-        class="absolute right-0 mt-2 z-20 min-w-40 rounded-md border bg-background p-1 shadow-md"
-        role="menu"
+  <DropdownMenu.Root bind:open={actionsMenuOpen}>
+    <DropdownMenu.Trigger>
+      <Button
+        variant="secondary"
+        size="sm"
+        title="Actions"
+        aria-haspopup="menu"
+        aria-expanded={actionsMenuOpen}
       >
-        <Button
-          class="w-full justify-start"
-          variant="ghost"
-          size="sm"
-          onclick={exportRules}
-          title="Export"
-          role="menuitem"
-        >
-          Export
-        </Button>
-        <Button
-          class="w-full justify-start"
-          variant="ghost"
-          size="sm"
-          onclick={importRules}
-          title="Import"
-          role="menuitem"
-        >
-          Import
-        </Button>
-        <Button
-          class="w-full justify-start"
-          variant="ghost"
-          size="sm"
-          onclick={deleteAllRules}
-          title="Wipe Rules"
-          disabled={$rules.length === 0}
-          role="menuitem"
-        >
-          Delete All
-        </Button>
-      </div>
-    {/if}
-  </div>
+        Actions
+      </Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content class="w-40" sideOffset={8}>
+      <DropdownMenu.Item onclick={exportRules} title="Export">Export</DropdownMenu.Item>
+      <DropdownMenu.Item onclick={importRules} title="Import">Import</DropdownMenu.Item>
+      <DropdownMenu.Separator />
+      <DropdownMenu.Item
+        onclick={deleteAllRules}
+        title="Wipe Rules"
+        disabled={$rules.length === 0}
+      >
+        Delete All
+      </DropdownMenu.Item>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
 </div>
 
 <Table class="table-fixed w-full min-w-4xl">
