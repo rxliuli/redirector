@@ -2,12 +2,14 @@
   import { rules } from '../store'
   import { Button } from '$lib/components/ui/button'
   import { Checkbox } from '$lib/components/ui/checkbox'
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
   import {
     CheckIcon,
     ChevronDown,
     ChevronUp,
     SquarePenIcon,
     TrashIcon,
+    EllipsisVertical
   } from '@lucide/svelte'
   import {
     Table,
@@ -33,6 +35,7 @@
     index?: number
     rule?: MatchRule
   }>({ open: false })
+  let actionsMenuOpen = $state(false)
 
   function sortRules(upOrDown: string, index: number) {
     if (upOrDown == 'up') {
@@ -66,6 +69,22 @@
     toast.success('Rule deleted')
   }
 
+  function deleteAllRules() {
+    if (!$rules.length) {
+      return
+    }
+    const confirmDelete = globalThis.confirm
+      ? globalThis.confirm('Delete all rules? This action cannot be undone.')
+      : true
+    if (!confirmDelete) {
+      return
+    }
+    $rules = []
+    editDialog = { open: false }
+    actionsMenuOpen = false
+    toast.success('All rules deleted')
+  }
+
   function exportRules() {
     const json = JSON.stringify($rules, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
@@ -73,7 +92,11 @@
     const a = document.createElement('a')
     a.href = url
     a.download = `Redirector-${new Date().toISOString()}.json`
+    document.body.appendChild(a)
     a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    actionsMenuOpen = false
     toast.success('Exported rules')
   }
 
@@ -90,6 +113,7 @@
           rule.enabled = rule.enabled ?? true
           return rule
         })
+        actionsMenuOpen = false
         toast.success('Imported rules')
       }
     }
@@ -100,12 +124,32 @@
 <div class="flex items-center justify-between gap-2 mb-4">
   <h2 class="text-lg font-bold mr-auto">Rules</h2>
   <Button size="sm" onclick={onAddRule} title="Add Rule">Add Rule</Button>
-  <Button variant="secondary" size="sm" onclick={exportRules} title="Export">
-    Export
-  </Button>
-  <Button variant="secondary" size="sm" onclick={importRules} title="Import">
-    Import
-  </Button>
+  <DropdownMenu.Root bind:open={actionsMenuOpen}>
+    <DropdownMenu.Trigger>
+      <Button
+        variant="secondary"
+        size="icon"
+        title="Actions"
+        aria-label="Actions"
+        aria-haspopup="menu"
+        aria-expanded={actionsMenuOpen}
+      >
+        <EllipsisVertical class="h-4 w-4" />
+      </Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content class="w-40" sideOffset={8}>
+      <DropdownMenu.Item onclick={exportRules} title="Export">Export</DropdownMenu.Item>
+      <DropdownMenu.Item onclick={importRules} title="Import">Import</DropdownMenu.Item>
+      <DropdownMenu.Separator />
+      <DropdownMenu.Item
+        onclick={deleteAllRules}
+        title="Wipe Rules"
+        disabled={$rules.length === 0}
+      >
+        Delete All
+      </DropdownMenu.Item>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
 </div>
 
 <Table class="table-fixed w-full min-w-4xl">

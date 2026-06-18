@@ -157,6 +157,52 @@ describe('Action', () => {
     await screen.getByTitle('Delete').nth(0).click()
     await expect.element(screen.getByText(rule2.from)).not.toBeInTheDocument()
   })
+  it('delete all rules(confirm)', async () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      enabled: true,
+      from: 'https://example.com/from',
+      to: 'https://example.com/new',
+    }
+    const rule2: MatchRule = {
+      mode: 'regex',
+      enabled: true,
+      from: 'https://example.com/1',
+      to: 'https://example.com/2',
+    }
+    rules.set([rule, rule2])
+    const screen = render(Dataset)
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await screen.getByTitle('Actions').click()
+    await screen.getByTitle('Wipe Rules').click()
+    await expect.element(screen.getByText(rule.from)).not.toBeInTheDocument()
+    await expect.element(screen.getByText(rule2.from)).not.toBeInTheDocument()
+    await screen.getByTitle('Actions').click()
+    await expect.element(screen.getByTitle('Wipe Rules')).toBeDisabled()
+  })
+  it('delete all rules(reject)', async () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      enabled: true,
+      from: 'https://example.com/from',
+      to: 'https://example.com/new',
+    }
+    const rule2: MatchRule = {
+      mode: 'regex',
+      enabled: true,
+      from: 'https://example.com/1',
+      to: 'https://example.com/2',
+    }
+    rules.set([rule, rule2])
+    const screen = render(Dataset)
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    await screen.getByTitle('Actions').click()
+    await screen.getByTitle('Wipe Rules').click()
+    await expect.element(screen.getByText(rule.from)).toBeInTheDocument()
+    await expect.element(screen.getByText(rule2.from)).toBeInTheDocument()
+    await screen.getByTitle('Actions').click()
+    await expect.element(screen.getByTitle('Wipe Rules')).toBeEnabled()
+  })
   it('delete rule on edit', async () => {
     const rule: MatchRule = {
       mode: 'regex',
@@ -247,6 +293,7 @@ describe('Export and Import', () => {
     const screen = render(Dataset)
     const [download] = await Promise.all([
       commands.waitForDownload(),
+      screen.getByTitle('Actions').click(),
       screen.getByTitle('Export').click(),
     ])
     expect(JSON.parse(download.text)).toEqual([rule])
@@ -267,6 +314,7 @@ describe('Export and Import', () => {
         mimeType: 'application/json',
         text: JSON.stringify([rule]),
       }),
+      screen.getByTitle('Actions').click(),
       screen.getByTitle('Import').click(),
     ])
     await expect.element(screen.getByText(rule.from)).toBeInTheDocument()
@@ -299,6 +347,7 @@ describe('Export and Import', () => {
         mimeType: 'application/json',
         text: JSON.stringify([rule2]),
       }),
+      screen.getByTitle('Actions').click(),
       screen.getByTitle('Import').click(),
     ])
     await expect
@@ -326,8 +375,9 @@ describe('Export and Import', () => {
     await screen.getByTitle('Edit').click()
     expect(screen.getByTitle('Match URL')).toHaveValue(rule.from)
     vi.spyOn(window, 'confirm').mockReturnValue(false)
+    await screen.getByTitle('Actions').click()
     await screen.getByTitle('Import').click()
-    await expect.element(screen.getByTitle('Match URL')).toBeInTheDocument()
+    await expect.element(screen.getByTitle('Match URL')).not.toBeInTheDocument()
     await expect.element(screen.getByText(rule2.from)).not.toBeInTheDocument()
     const rows = [...document.querySelectorAll('table > tbody > tr')]
     expect(rows).length(1)

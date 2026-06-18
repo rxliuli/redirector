@@ -14,9 +14,6 @@ importers:
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
-      bits-ui:
-        specifier: ^2.14.4
-        version: 2.14.4(@internationalized/date@3.10.0)(svelte@5.45.4)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -49,11 +46,11 @@ importers:
         specifier: ^1.19.6
         version: 1.19.6(hono@4.10.7)
       '@internationalized/date':
-        specifier: ^3.10.0
-        version: 3.10.0
+        specifier: ^3.12.2
+        version: 3.12.2
       '@lucide/svelte':
-        specifier: ^0.561.0
-        version: 0.561.0(svelte@5.45.4)
+        specifier: ^1.20.0
+        version: 1.20.0(svelte@5.45.4)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.1(svelte@5.45.4)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2))
@@ -81,6 +78,9 @@ importers:
       '@wxt-dev/module-svelte':
         specifier: ^2.0.4
         version: 2.0.4(svelte@5.45.4)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2))(wxt@0.20.26(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3))
+      bits-ui:
+        specifier: ^2.18.1
+        version: 2.18.1(@internationalized/date@3.12.2)(svelte@5.45.4)
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -504,8 +504,8 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@internationalized/date@3.10.0':
-    resolution: {integrity: sha512-oxDR/NTEJ1k+UFVQElaNIk65E/Z83HK1z1WI3lQyhTtnNg4R5oVXaPzK3jcpKG8UHKDVuDQHzn+wsxSz8RP3aw==}
+  '@internationalized/date@3.12.2':
+    resolution: {integrity: sha512-FY1Y+H64NDs+HAF6omlnWxm3mEpfgaCSWtL5l551ZZfImA+kGjPFgrnJrGjH6lfmLL0g8Z/mBu1R3kufeCp6Jw==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -523,8 +523,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@lucide/svelte@0.561.0':
-    resolution: {integrity: sha512-vofKV2UFVrKE6I4ewKJ3dfCXSV6iP6nWVmiM83MLjsU91EeJcEg7LoWUABLp/aOTxj1HQNbJD1f3g3L0JQgH9A==}
+  '@lucide/svelte@1.20.0':
+    resolution: {integrity: sha512-s7TKCHEtFEfflOUDPRC0WBZEjoNJHtj/aUmuWxopFe3AKecEoKvMmCaO0sBDkflok8nR0BCFsm44QF+S6/gc+w==}
     peerDependencies:
       svelte: ^5
 
@@ -975,8 +975,8 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  bits-ui@2.14.4:
-    resolution: {integrity: sha512-W6kenhnbd/YVvur+DKkaVJ6GldE53eLewur5AhUCqslYQ0vjZr8eWlOfwZnMiPB+PF5HMVqf61vXBvmyrAmPWg==}
+  bits-ui@2.18.1:
+    resolution: {integrity: sha512-KkemzKFH4T3gt3H+P86JcnAWExjByv/6vlwjm/BoCwTPHu03yiCdxbghdJLvFReQTe0acCAiRcKfmixxD6XvlA==}
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
@@ -2742,7 +2742,7 @@ snapshots:
     dependencies:
       hono: 4.10.7
 
-  '@internationalized/date@3.10.0':
+  '@internationalized/date@3.12.2':
     dependencies:
       '@swc/helpers': 0.5.17
 
@@ -2765,7 +2765,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@lucide/svelte@0.561.0(svelte@5.45.4)':
+  '@lucide/svelte@1.20.0(svelte@5.45.4)':
     dependencies:
       svelte: 5.45.4
 
@@ -3163,11 +3163,11 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  bits-ui@2.14.4(@internationalized/date@3.10.0)(svelte@5.45.4):
+  bits-ui@2.18.1(@internationalized/date@3.12.2)(svelte@5.45.4):
     dependencies:
       '@floating-ui/core': 1.7.3
       '@floating-ui/dom': 1.7.4
-      '@internationalized/date': 3.10.0
+      '@internationalized/date': 3.12.2
       esm-env: 1.2.2
       runed: 0.35.1(svelte@5.45.4)
       svelte: 5.45.4
