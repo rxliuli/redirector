@@ -6,7 +6,10 @@
   import { Button } from '$lib/components/ui/button'
   import { Toaster } from '$lib/components/ui/sonner'
   import { ExternalLinkIcon } from '@lucide/svelte'
-  import { rules } from './store'
+  import {
+    addRule,
+    rules,
+  } from './store'
   import { toast } from 'svelte-sonner'
   import type { MatchRule } from '$lib/url'
 
@@ -18,9 +21,15 @@
     addDialog.open = true
   }
 
-  function handleSaveNewRule(rule: MatchRule) {
-    $rules = [rule, ...$rules]
-    toast.success('Rule added')
+  async function handleSaveNewRule(rule: MatchRule) {
+    try {
+      await addRule(rule)
+      toast.success('Rule added')
+      return
+    } catch (error) {
+      toast.error('Failed to save rule')
+      return
+    }
   }
 </script>
 

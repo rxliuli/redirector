@@ -1,34 +1,87 @@
-import { MatchRule } from '$lib/url'
-import { writable } from 'svelte/store'
+import {
+  normalizeRules,
+  readRulesFromMode,
+  readRulesStorageMode,
+  type RulesStorageMode,
+  writeRulesStorageMode,
+  writeRulesToMode,
+} from "$lib/storage";
+import { MatchRule } from "$lib/url";
+import { get, writable } from "svelte/store";
 
-function createSyncStorage<T>(
-  key: string,
-  initialValue: T,
-  transform?: (value: T) => T,
-) {
-  const { subscribe, set, update } = writable<T>(initialValue, () => {
-    browser.storage.sync.get(key).then((result) => {
-      set(
-        transform
-          ? transform(result[key] as T || initialValue)
-          : result[key] as T || initialValue,
-      )
-    })
-  })
+const rulesStorageModeState = writable<RulesStorageMode>("sync");
+const rulesState = writable<MatchRule[]>([]);
 
-  return {
-    subscribe,
-    set: (value: T) => {
-      set(value)
-      browser.storage.sync.set({ [key]: value })
-    },
-    update: (value: T) => {
-      update((value) => value)
-      browser.storage.sync.set({ [key]: value })
-    },
+let initialized = false;
+let loadingPromise: Promise<void> | undefined;
+
+async function ensureInitialized() {
+  if (initialized) {
+    return;
   }
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+  loadingPromise = (async () => {
+    const mode = await readRulesStorageMode();
+    rulesStorageModeState.set(mode);
+    rulesState.set(await readRulesFromMode(mode));
+    initialized = true;
+  })().finally(() => {
+    loadingPromise = undefined;
+  });
+  return loadingPromise;
 }
 
-export const rules = createSyncStorage<MatchRule[]>('rules', [], (value) =>
-  value.map((rule) => ({ ...rule, enabled: rule.enabled ?? true })),
-)
+async function persistRules(nextRules: MatchRule[]) {
+  await ensureInitialized();
+  const mode = get(rulesStorageModeState);
+  const normalized = normalizeRules(nextRules);
+  await writeRulesToMode(mode, normalized);
+  return normalized;
+}
+
+export const rulesStorageMode = {
+  subscribe: rulesStorageModeState.subscribe,
+};
+
+export async function setRulesStorageMode(
+  mode: RulesStorageMode,
+): Promise<void> {
+  await ensureInitialized();
+  const previousMode = get(rulesStorageModeState);
+  if (previousMode === mode) {
+    return;
+  }
+  const currentRules = await readRulesFromMode(previousMode);
+  await writeRulesToMode(mode, currentRules);
+  await writeRulesStorageMode(mode);
+  rulesStorageModeState.set(mode);
+  rulesState.set(currentRules);
+}
+
+export const rules = {
+  subscribe(run: (value: MatchRule[]) => void) {
+    ensureInitialized().catch((error) => {
+      console.error("Failed to initialize rules store", error);
+    });
+    return rulesState.subscribe(run);
+  },
+  set(value: MatchRule[]) {
+    const normalized = normalizeRules(value);
+    rulesState.set(normalized);
+    void persistRules(normalized).catch((error) => {
+      console.error("Failed to persist rules", error);
+    });
+  },
+  update(updater: (value: MatchRule[]) => MatchRule[]) {
+    const nextValue = updater(get(rulesState));
+    rules.set(nextValue);
+  },
+};
+
+export async function addRule(rule: MatchRule): Promise<void> {
+  await ensureInitialized();
+  const normalized = await persistRules([rule, ...get(rulesState)]);
+  rulesState.set(normalized);
+}
