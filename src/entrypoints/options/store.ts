@@ -9,6 +9,8 @@ import {
 import { MatchRule } from "$lib/url";
 import { get, writable } from "svelte/store";
 
+const STORAGE_QUOTA_EXCEEDED_RE = /quota/i;
+
 const rulesStorageModeState = writable<RulesStorageMode>("sync");
 const rulesState = writable<MatchRule[]>([]);
 
@@ -39,6 +41,16 @@ async function persistRules(nextRules: MatchRule[]) {
   const normalized = normalizeRules(nextRules);
   await writeRulesToMode(mode, normalized);
   return normalized;
+}
+
+export function isStorageQuotaExceededError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return STORAGE_QUOTA_EXCEEDED_RE.test(error.message);
+  }
+  if (typeof error === "string") {
+    return STORAGE_QUOTA_EXCEEDED_RE.test(error);
+  }
+  return false;
 }
 
 export const rulesStorageMode = {
@@ -83,5 +95,10 @@ export const rules = {
 export async function addRule(rule: MatchRule): Promise<void> {
   await ensureInitialized();
   const normalized = await persistRules([rule, ...get(rulesState)]);
+  rulesState.set(normalized);
+}
+
+export async function replaceRules(nextRules: MatchRule[]): Promise<void> {
+  const normalized = await persistRules(nextRules);
   rulesState.set(normalized);
 }

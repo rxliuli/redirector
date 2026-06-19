@@ -8,6 +8,7 @@
   import { ExternalLinkIcon } from '@lucide/svelte'
   import {
     addRule,
+    isStorageQuotaExceededError,
     rules,
   } from './store'
   import { toast } from 'svelte-sonner'
@@ -27,6 +28,10 @@
       toast.success('Rule added')
       return
     } catch (error) {
+      if (isStorageQuotaExceededError(error)) {
+        toast.error('Storage quota exceeded. You can switch to Local mode in the menu.')
+        return
+      }
       toast.error('Failed to save rule')
       return
     }

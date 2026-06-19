@@ -1,5 +1,7 @@
 <script lang="ts">
   import {
+    isStorageQuotaExceededError,
+    replaceRules,
     rules,
     rulesStorageMode,
     setRulesStorageMode,
@@ -119,6 +121,11 @@
           : 'Switched to sync storage',
       )
     } catch (error) {
+      if (isStorageQuotaExceededError(error)) {
+        toast.error('Failed to switch storage mode. Storage quota exceeded.')
+        console.error('Failed to switch storage mode', error)
+        return
+      }
       toast.error('Failed to switch storage mode')
       console.error('Failed to switch storage mode', error)
     } finally {
@@ -133,14 +140,24 @@
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
-        const text = await file.text()
-        const json = JSON.parse(text)
-        $rules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
-          rule.enabled = rule.enabled ?? true
-          return rule
-        })
-        actionsMenuOpen = false
-        toast.success('Imported rules')
+        try {
+          const text = await file.text()
+          const json = JSON.parse(text)
+          const nextRules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
+            rule.enabled = rule.enabled ?? true
+            return rule
+          })
+          await replaceRules(nextRules)
+          actionsMenuOpen = false
+          toast.success('Imported rules')
+        } catch (error) {
+          if (isStorageQuotaExceededError(error)) {
+            toast.error('Storage quota exceeded. You can switch to Local mode in the menu.')
+            return
+          }
+          toast.error('Failed to import rules')
+          console.error('Failed to import rules', error)
+        }
       }
     }
     input.click()
