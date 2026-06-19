@@ -64,10 +64,22 @@
     }
   }
 
-  function handleSave(rule: MatchRule, index?: number) {
+  async function handleSave(rule: MatchRule, index?: number) {
     if (index !== undefined) {
-      $rules[index] = rule
-      toast.success('Rule updated')
+      const nextRules = [...$rules]
+      nextRules[index] = rule
+      try {
+        await replaceRules(nextRules)
+        toast.success('Rule updated')
+      } catch (error) {
+        if (isStorageQuotaExceededError(error)) {
+          toast.error('Storage quota exceeded. You can switch to Local mode in the menu.')
+          throw error
+        }
+        toast.error('Failed to update rule')
+        console.error('Failed to update rule', error)
+        throw error
+      }
     }
   }
 
