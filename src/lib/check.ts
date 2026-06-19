@@ -1,3 +1,4 @@
+import { readActiveRules } from './storage'
 import { matchRule, MatchRule } from './url'
 
 export type CheckResult = {
@@ -6,13 +7,7 @@ export type CheckResult = {
 }
 
 export async function getEnabledRules() {
-  return (
-    (
-      await browser.storage.sync.get<{
-        rules?: MatchRule[]
-      }>('rules')
-    ).rules ?? []
-  ).filter((it) => it.enabled ?? true)
+  return (await readActiveRules()).filter((it) => it.enabled ?? true)
 }
 
 export interface CheckOptions {

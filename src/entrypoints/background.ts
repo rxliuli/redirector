@@ -1,14 +1,36 @@
 import { getRedirectUrl, store } from '$lib/redirect'
+import {
+  readRulesFromMode,
+  readRulesStorageMode,
+  RULES_KEY,
+  RULES_STORAGE_MODE_KEY,
+  type RulesStorageMode,
+} from '$lib/storage'
 import { MatchRule } from '$lib/url'
 
 export default defineBackground(() => {
-  browser.storage.sync.get('rules').then((data: { rules?: MatchRule[] }) => {
-    store.rules = data.rules || []
+  let activeStorageMode: RulesStorageMode = 'sync'
+
+  async function reloadRulesFromActiveMode() {
+    store.rules = await readRulesFromMode(activeStorageMode)
+  }
+
+  readRulesStorageMode().then(async (mode) => {
+    activeStorageMode = mode
+    await reloadRulesFromActiveMode()
   })
 
-  browser.storage.sync.onChanged.addListener((changes) => {
-    if (changes.rules) {
-      store.rules = changes.rules.newValue as MatchRule[]
+  browser.storage.onChanged.addListener(async (changes, areaName) => {
+    if (areaName === 'local' && changes[RULES_STORAGE_MODE_KEY]) {
+      const nextMode = changes[RULES_STORAGE_MODE_KEY].newValue as
+        | RulesStorageMode
+        | undefined
+      activeStorageMode = nextMode === 'local' ? 'local' : 'sync'
+      await reloadRulesFromActiveMode()
+      return
+    }
+    if (areaName === activeStorageMode && changes[RULES_KEY]) {
+      store.rules = (changes[RULES_KEY].newValue as MatchRule[] | undefined) ?? []
     }
   })
 

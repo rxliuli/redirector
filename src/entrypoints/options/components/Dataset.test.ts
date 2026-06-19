@@ -2,9 +2,11 @@ import { it, expect, beforeEach, afterEach, describe, vi } from 'vitest'
 import Dataset from './Dataset.svelte'
 import { render } from 'vitest-browser-svelte'
 import { fakeBrowser } from '@webext-core/fake-browser'
-import { rules } from '../store'
+import { rules, setRulesStorageMode } from '../store'
 import { MatchRule } from '$lib/url'
 import { commands } from '@vitest/browser/context'
+import { toast } from 'svelte-sonner'
+import * as storage from '$lib/storage'
 
 beforeEach(() => {
   Reflect.set(globalThis, 'browser', fakeBrowser)
@@ -13,7 +15,43 @@ beforeEach(() => {
 afterEach(() => {
   rules.set([])
   Reflect.deleteProperty(globalThis, 'browser')
-  vi.clearAllMocks()
+  vi.restoreAllMocks()
+})
+
+describe('Storage Mode', () => {
+  it('switching local -> sync fails gracefully on sync quota limit', async () => {
+    const localRule: MatchRule = {
+      mode: 'regex',
+      enabled: true,
+      from: 'https://example.com/from-local',
+      to: 'https://example.com/to-local',
+    }
+    rules.set([localRule])
+    await setRulesStorageMode('local')
+
+    const quotaError = new Error('quota exceeded in sync storage')
+    const originalSyncSet = browser.storage.sync.set.bind(browser.storage.sync)
+    vi.spyOn(browser.storage.sync, 'set').mockImplementation(async (value) => {
+      if ('rules' in value) {
+        throw quotaError
+      }
+      return originalSyncSet(value)
+    })
+    const toastErrorSpy = vi.spyOn(toast, 'error')
+
+    const screen = render(Dataset)
+    await screen.getByTitle('Actions').click()
+    const syncStorageToggle = screen.getByTitle('Use sync storage')
+    await expect.element(syncStorageToggle).toHaveAttribute('data-state', 'unchecked')
+
+    await syncStorageToggle.click()
+
+    expect(toastErrorSpy).toHaveBeenCalledWith(
+      'Failed to switch storage mode. Storage quota exceeded.',
+    )
+    await expect.element(syncStorageToggle).toHaveAttribute('data-state', 'unchecked')
+    await expect(storage.readRulesStorageMode()).resolves.toBe('local')
+  })
 })
 
 describe('List', () => {

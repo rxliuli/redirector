@@ -45,7 +45,7 @@
     index?: number
     allRules: MatchRule[]
     onClose: () => void
-    onSave: (rule: MatchRule, index?: number) => void
+    onSave: (rule: MatchRule, index?: number) => void | Promise<void>
   }
 
   let { open = $bindable(), rule, index, allRules, onClose, onSave }: Props = $props()
@@ -104,19 +104,23 @@
     }
   })
 
-  function handleSave() {
+  async function handleSave() {
     if (formState.from && formState.to) {
-      onSave(
-        {
-          from: formState.from.trim(),
-          to: formState.to.trim(),
-          enabled: formState.enabled,
-          mode: formState.mode,
-          testUrl: formState.testUrl.trim() || undefined,
-        },
-        index,
-      )
-      onClose()
+      try {
+        await onSave(
+          {
+            from: formState.from.trim(),
+            to: formState.to.trim(),
+            enabled: formState.enabled,
+            mode: formState.mode,
+            testUrl: formState.testUrl.trim() || undefined,
+          },
+          index,
+        )
+        onClose()
+      } catch {
+        // The parent handler reports save errors via toast.
+      }
     }
   }
 </script>

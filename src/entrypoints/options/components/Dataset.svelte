@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { rules } from '../store'
+  import {
+    isStorageQuotaExceededError,
+    replaceRules,
+    rules,
+    rulesStorageMode,
+    setRulesStorageMode,
+  } from '../store'
   import { Button } from '$lib/components/ui/button'
   import { Checkbox } from '$lib/components/ui/checkbox'
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
@@ -36,6 +42,7 @@
     rule?: MatchRule
   }>({ open: false })
   let actionsMenuOpen = $state(false)
+  let switchingStorageMode = $state(false)
 
   function sortRules(upOrDown: string, index: number) {
     if (upOrDown == 'up') {
@@ -57,10 +64,22 @@
     }
   }
 
-  function handleSave(rule: MatchRule, index?: number) {
+  async function handleSave(rule: MatchRule, index?: number) {
     if (index !== undefined) {
-      $rules[index] = rule
-      toast.success('Rule updated')
+      const nextRules = [...$rules]
+      nextRules[index] = rule
+      try {
+        await replaceRules(nextRules)
+        toast.success('Rule updated')
+      } catch (error) {
+        if (isStorageQuotaExceededError(error)) {
+          toast.error('Storage quota exceeded. You can switch to Local mode in the menu.')
+          throw error
+        }
+        toast.error('Failed to update rule')
+        console.error('Failed to update rule', error)
+        throw error
+      }
     }
   }
 
@@ -100,21 +119,57 @@
     toast.success('Exported rules')
   }
 
-  function importRules() {
+  async function toggleStorageMode() {
+    if (switchingStorageMode) {
+      return
+    }
+    switchingStorageMode = true
+    const nextMode = $rulesStorageMode === 'sync' ? 'local' : 'sync'
+    try {
+      await setRulesStorageMode(nextMode)
+      toast.success(
+        nextMode === 'local'
+          ? 'Switched to local storage'
+          : 'Switched to sync storage',
+      )
+    } catch (error) {
+      if (isStorageQuotaExceededError(error)) {
+        toast.error('Failed to switch storage mode. Storage quota exceeded.')
+        console.error('Failed to switch storage mode', error)
+        return
+      }
+      toast.error('Failed to switch storage mode')
+      console.error('Failed to switch storage mode', error)
+    } finally {
+      switchingStorageMode = false
+    }
+  }
+
+  async function importRules() {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'application/json'
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
-        const text = await file.text()
-        const json = JSON.parse(text)
-        $rules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
-          rule.enabled = rule.enabled ?? true
-          return rule
-        })
-        actionsMenuOpen = false
-        toast.success('Imported rules')
+        try {
+          const text = await file.text()
+          const json = JSON.parse(text)
+          const nextRules = uniqBy([...json, ...$rules], (it) => it.from).map((rule) => {
+            rule.enabled = rule.enabled ?? true
+            return rule
+          })
+          await replaceRules(nextRules)
+          actionsMenuOpen = false
+          toast.success('Imported rules')
+        } catch (error) {
+          if (isStorageQuotaExceededError(error)) {
+            toast.error('Storage quota exceeded. You can switch to Local mode in the menu.')
+            return
+          }
+          toast.error('Failed to import rules')
+          console.error('Failed to import rules', error)
+        }
       }
     }
     input.click()
@@ -137,7 +192,19 @@
         <EllipsisVertical class="h-4 w-4" />
       </Button>
     </DropdownMenu.Trigger>
-    <DropdownMenu.Content class="w-40" sideOffset={8}>
+    <DropdownMenu.Content class="w-56" sideOffset={8}>
+      <div class="flex items-center gap-1 px-1 pb-1">
+        <DropdownMenu.CheckboxItem
+          checked={$rulesStorageMode === 'sync'}
+          onclick={toggleStorageMode}
+          class="flex-1"
+          title="Use sync storage"
+          disabled={switchingStorageMode}
+        >
+          Sync Storage
+        </DropdownMenu.CheckboxItem>
+      </div>
+      <DropdownMenu.Separator />
       <DropdownMenu.Item onclick={exportRules} title="Export">Export</DropdownMenu.Item>
       <DropdownMenu.Item onclick={importRules} title="Import">Import</DropdownMenu.Item>
       <DropdownMenu.Separator />
