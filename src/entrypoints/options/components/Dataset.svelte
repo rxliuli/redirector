@@ -192,7 +192,7 @@
         <EllipsisVertical class="h-4 w-4" />
       </Button>
     </DropdownMenu.Trigger>
-    <DropdownMenu.Content class="w-56" sideOffset={8}>
+    <DropdownMenu.Content class="w-56" align="end" sideOffset={8}>
       <div class="flex items-center gap-1 px-1 pb-1">
         <DropdownMenu.CheckboxItem
           checked={$rulesStorageMode === 'sync'}
