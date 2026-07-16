@@ -15,7 +15,11 @@ export default defineBackground(() => {
     store.rules = await readRulesFromMode(activeStorageMode)
   }
 
-  readRulesStorageMode().then(async (mode) => {
+  // MV3 wakes the service worker on navigation events and dispatches them
+  // right after the script evaluates — before this async load resolves,
+  // store.rules is still empty. Rule evaluation must await this promise or
+  // cold-start navigations are checked against zero rules. See issue #39.
+  const rulesReady = readRulesStorageMode().then(async (mode) => {
     activeStorageMode = mode
     await reloadRulesFromActiveMode()
   })
@@ -117,7 +121,10 @@ export default defineBackground(() => {
   browser.webNavigation.onBeforeNavigate.addListener(async (details) => {
     if (details.frameId !== 0) return
     const key = `${details.tabId}|${details.url}`
+    // Confirmation bookkeeping must stay synchronous with the event —
+    // onBeforeRequest checks it right after this listener fires.
     confirmedNavigations.add(key)
+    await rulesReady
     handleRedirect(details, 'onBeforeNavigate')
   })
   if (!import.meta.env.SAFARI) {
@@ -145,13 +152,20 @@ export default defineBackground(() => {
           return {}
         }
         confirmedNavigations.delete(key)
-        const result = handleRedirect(details, 'onBeforeRequest')
-        if (result.redirectUrl) {
-          confirmedRequestIds.delete(details.requestId)
-        } else {
-          confirmedRequestIds.add(details.requestId)
-        }
-        return result
+        // Register the requestId before any await: if the server redirect
+        // arrives while rules are still loading, onBeforeRedirect must
+        // already see this request as confirmed or the chain breaks.
+        confirmedRequestIds.add(details.requestId)
+        void (async () => {
+          await rulesReady
+          const result = handleRedirect(details, 'onBeforeRequest')
+          if (result.redirectUrl) {
+            confirmedRequestIds.delete(details.requestId)
+          }
+        })()
+        // Not a blocking listener — the return value is ignored; the actual
+        // redirect happens via tabs.update inside handleRedirect.
+        return {}
       },
       { urls: ['<all_urls>'], types: ['main_frame'] },
     )
@@ -166,10 +180,12 @@ export default defineBackground(() => {
     // TODO: https://developer.apple.com/documentation/safariservices/assessing-your-safari-web-extension-s-browser-compatibility#:~:text=onHistoryStateUpdated
     browser.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
       if (details.frameId !== 0) return
+      await rulesReady
       handleRedirect(details, 'onHistoryStateUpdated')
     })
   } else {
     browser.tabs.onUpdated.addListener(async (tabId, _changeInfo, tab) => {
+      await rulesReady
       handleRedirect(
         {
           tabId,

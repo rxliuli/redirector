@@ -1,3 +1,5 @@
+import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
 import { MatchRule } from '$lib/url'
 import { test, expect, BrowserTestContext } from './fixtures'
 
@@ -113,6 +115,104 @@ for (const { path, shouldRedirect } of [
     await page.close()
   })
 }
+
+// Regression tests for MV3 service worker cold start (issue #39).
+// The SW loads rules asynchronously on wake; navigation events dispatched
+// before the load completed used to be evaluated against zero rules, so the
+// first navigation after idle never redirected (refresh then worked).
+// ServiceWorker.stopAllWorkers simulates the idle-stopped worker.
+test('cold service worker: direct navigation still redirects', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          enabled: true,
+          from: `${testServerUrl}/product-pol-:product(.*)`,
+          mode: 'url-pattern',
+          to: `${testServerUrl}/product-eng-{{pathname.groups.product}}`,
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0].waitForTimeout(500)
+
+  const page = await context.newPage()
+
+  // Stop the extension service worker to simulate idle cold start
+  const client = await context.newCDPSession(page)
+  await client.send('ServiceWorker.enable')
+  await client.send('ServiceWorker.stopAllWorkers')
+  await page.waitForTimeout(500)
+
+  await page
+    .goto(`${testServer.url}/product-pol-123-abc.html`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1500)
+
+  expect(page.url()).toBe(`${testServer.url}/product-eng-123-abc.html`)
+
+  await page.close()
+})
+
+// Cold start combined with a cross-origin 302 — mirrors the reported case:
+// an email-tracker link (different origin) 302s to a rule-matching URL
+// while the service worker is asleep.
+test('cold service worker: cross-origin 302 target still redirects', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  const tracker = new Hono()
+  tracker.get('/smrd.htm', (c) => {
+    const url = c.req.query('url')
+    return c.redirect(`${url}?smclient=x&utm_source=y`, 302)
+  })
+  const trackerServer = serve({ fetch: tracker.fetch, port: 3457 })
+
+  try {
+    await serviceWorker.evaluate(async (testServerUrl) => {
+      await chrome.storage.sync.set({
+        rules: [
+          {
+            enabled: true,
+            from: `${testServerUrl}/product-pol-:product(.*)`,
+            mode: 'url-pattern',
+            to: `${testServerUrl}/product-eng-{{pathname.groups.product}}`,
+          },
+        ] satisfies MatchRule[],
+      })
+    }, testServer.url)
+
+    await context.pages()[0].waitForTimeout(500)
+
+    const page = await context.newPage()
+
+    const client = await context.newCDPSession(page)
+    await client.send('ServiceWorker.enable')
+    await client.send('ServiceWorker.stopAllWorkers')
+    await page.waitForTimeout(500)
+
+    const target = `${testServer.url}/product-pol-123-abc.html`
+    await page
+      .goto(
+        `http://localhost:3457/smrd.htm?url=${encodeURIComponent(target)}`,
+        { timeout: 5000 },
+      )
+      .catch(() => {})
+    await page.waitForTimeout(1500)
+
+    expect(page.url()).toBe(`${testServer.url}/product-eng-123-abc.html`)
+
+    await page.close()
+  } finally {
+    trackerServer.close()
+  }
+})
 
 // Test with local test server to avoid Google's bot detection
 // This test validates the fix for handling extension redirects after website 302 redirections
