@@ -39,6 +39,7 @@ That's the basic idea: **match a URL, capture the parts you need, and build a ne
 
 - **Enable / Disable** — Toggle individual rules on or off without deleting them
 - **Reorder** — Rules are checked from top to bottom; drag to change priority
+- **Exclude Pattern** — Optionally set a pattern per rule; URLs matching it are never redirected by that rule
 - **Test** — Paste any URL in the Test URL field to see which rule matches and where it redirects
 - **Import / Export** — Back up your rules as a JSON file, or share them with others
 
@@ -48,6 +49,14 @@ That's the basic idea: **match a URL, capture the parts you need, and build a ne
 
 - Match URL: `^https://www.google.com/search\?q=(.*?)&.*$`
 - Redirect To: `https://duckduckgo.com/?q=$1`
+
+### Redirect X/Twitter to xcancel, except the home feed
+
+- Match URL: `^https://(?:twitter|x)\.com/(.*)`
+- Exclude Pattern: `https://(twitter|x)\.com/home`
+- Redirect To: `https://xcancel.com/$1`
+
+The exclude pattern keeps `/home` on the original site while everything else is redirected.
 
 ### Skip email click-tracking redirects
 

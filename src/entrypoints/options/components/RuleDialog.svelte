@@ -53,6 +53,7 @@
   let formState = $state({
     from: '',
     to: '',
+    exclude: '',
     testUrl: '',
     mode: 'regex' as MatchRule['mode'],
     enabled: true,
@@ -65,6 +66,7 @@
       formState = {
         from: rule?.from ?? '',
         to: rule?.to ?? '',
+        exclude: rule?.exclude ?? '',
         mode: rule?.mode ?? 'regex',
         enabled: rule?.enabled ?? true,
         testUrl: rule?.testUrl ?? '',
@@ -80,6 +82,7 @@
       if (template) {
         formState.from = template.value.from
         formState.to = template.value.to
+        formState.exclude = template.value.exclude ?? ''
         formState.mode = template.value.mode ?? 'regex'
         formState.testUrl = template.value.testUrl ?? ''
       }
@@ -91,6 +94,7 @@
       const currentRule = {
         from: formState.from.trim(),
         to: formState.to.trim(),
+        exclude: formState.exclude.trim() || undefined,
         enabled: true,
         mode: formState.mode,
       }
@@ -111,6 +115,7 @@
           {
             from: formState.from.trim(),
             to: formState.to.trim(),
+            exclude: formState.exclude.trim() || undefined,
             enabled: formState.enabled,
             mode: formState.mode,
             testUrl: formState.testUrl.trim() || undefined,
@@ -185,6 +190,22 @@
             formState.from = formState.from.trim()
           }}
           title="Match URL"
+        />
+      </div>
+
+      <!-- Exclude Pattern -->
+      <div class="flex flex-col gap-2">
+        <Label for="excludePattern">Exclude Pattern (optional)</Label>
+        <Input
+          id="excludePattern"
+          placeholder={formState.mode === 'regex'
+            ? 'https://(twitter|x)\\.com/home'
+            : 'https://x.com/home'}
+          bind:value={formState.exclude}
+          onblur={() => {
+            formState.exclude = formState.exclude.trim()
+          }}
+          title="URLs matching this pattern are never redirected by this rule"
         />
       </div>
 

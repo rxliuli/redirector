@@ -392,3 +392,65 @@ describe('replace pipeline', () => {
     expect(r.url).eq(originalUrl)
   })
 })
+
+describe('exclude pattern', () => {
+  const twitterRule: MatchRule = {
+    mode: 'regex',
+    from: '^https://(?:twitter|x)\\.com/(.*)',
+    exclude: 'https://(twitter|x)\\.com/home',
+    to: 'https://xcancel.com/$1',
+  }
+
+  it('regex: redirects when exclude does not match', () => {
+    expect(matchRule(twitterRule, 'https://x.com/user/status/123')).toEqual({
+      match: true,
+      url: 'https://xcancel.com/user/status/123',
+    })
+  })
+
+  it('regex: blocks redirect when exclude matches', () => {
+    expect(matchRule(twitterRule, 'https://x.com/home')).toEqual({
+      match: false,
+      url: 'https://x.com/home',
+      excluded: true,
+    })
+  })
+
+  it('regex: not-matched from is not reported as excluded', () => {
+    expect(matchRule(twitterRule, 'https://example.com/home')).toEqual({
+      match: false,
+      url: 'https://example.com/home',
+    })
+  })
+
+  it('regex: invalid exclude pattern is ignored', () => {
+    const rule: MatchRule = { ...twitterRule, exclude: '([invalid' }
+    expect(matchRule(rule, 'https://x.com/home')).toEqual({
+      match: true,
+      url: 'https://xcancel.com/home',
+    })
+  })
+
+  it('regex: empty exclude pattern is ignored', () => {
+    const rule: MatchRule = { ...twitterRule, exclude: '' }
+    expect(matchRule(rule, 'https://x.com/home').match).toBe(true)
+  })
+
+  it('url-pattern: blocks redirect when exclude matches', () => {
+    const rule: MatchRule = {
+      mode: 'url-pattern',
+      from: 'https://youtu.be/:id',
+      exclude: 'https://youtu.be/live',
+      to: 'https://www.youtube.com/watch?v={{pathname.groups.id}}',
+    }
+    expect(matchRule(rule, 'https://youtu.be/live')).toEqual({
+      match: false,
+      url: 'https://youtu.be/live',
+      excluded: true,
+    })
+    expect(matchRule(rule, 'https://youtu.be/sRHOrI59tRQ')).toEqual({
+      match: true,
+      url: 'https://www.youtube.com/watch?v=sRHOrI59tRQ',
+    })
+  })
+})

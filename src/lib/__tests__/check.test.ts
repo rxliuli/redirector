@@ -183,3 +183,55 @@ describe('Real-world', () => {
     })
   })
 })
+
+describe('exclude pattern', () => {
+  const rule: MatchRule = {
+    from: '^https://x\\.com/(.*)',
+    exclude: 'https://x\\.com/home',
+    to: 'https://xcancel.com/$1',
+  }
+
+  it('excluded URL reports excluded status', () => {
+    expect(checkRuleChain([rule], 'https://x.com/home')).toEqual({
+      status: 'excluded',
+      urls: [],
+    })
+  })
+
+  it('non-excluded URL still redirects', () => {
+    expect(checkRuleChain([rule], 'https://x.com/user/status/123')).toEqual({
+      status: 'matched',
+      urls: ['https://xcancel.com/user/status/123'],
+    })
+  })
+
+  it('exclude on a later rule does not block an earlier match', () => {
+    const other: MatchRule = {
+      from: '^https://x\\.com/home',
+      to: 'https://example.com/feed',
+    }
+    expect(checkRuleChain([other, rule], 'https://x.com/home')).toEqual({
+      status: 'matched',
+      urls: ['https://example.com/feed'],
+    })
+  })
+
+  it('exclusion mid-chain stops the chain as matched', () => {
+    // a → b, but b is excluded from the b → c rule: chain ends at b
+    const rules: MatchRule[] = [
+      {
+        from: 'https://a\\.com/(.*)',
+        to: 'https://b.com/$1',
+      },
+      {
+        from: 'https://b\\.com/(.*)',
+        exclude: 'https://b\\.com/stop',
+        to: 'https://c.com/$1',
+      },
+    ]
+    expect(checkRuleChain(rules, 'https://a.com/stop')).toEqual({
+      status: 'matched',
+      urls: ['https://b.com/stop'],
+    })
+  })
+})

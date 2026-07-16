@@ -51,6 +51,15 @@
       </p>
     </Alert.Description>
   </Alert.Root>
+{:else if result.status === 'excluded'}
+  <Alert.Root variant="default">
+    <AlertTriangleIcon class="w-4 h-4" />
+    <Alert.Description>
+      <p class="text-yellow-600 font-medium">
+        Matches the rule, but the exclude pattern blocks the redirect
+      </p>
+    </Alert.Description>
+  </Alert.Root>
 {:else if result.status === 'circular-redirect'}
   <Alert.Root variant="destructive">
     <AlertTriangleIcon class="w-4 h-4" />

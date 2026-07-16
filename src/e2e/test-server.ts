@@ -403,6 +403,27 @@ export function createTestServer(port = 3456) {
     `)
   })
 
+  // Exclude pattern test pages (issue #36)
+  app.get('/excl/*', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Exclude Source</title></head>
+        <body><h1>Exclude test source: ${c.req.path}</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/excl-target/*', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Exclude Target</title></head>
+        <body><h1>Exclude test target: ${c.req.path}</h1></body>
+      </html>
+    `)
+  })
+
   const server = serve({ fetch: app.fetch, port })
 
   return {

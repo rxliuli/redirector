@@ -73,6 +73,47 @@ for (const { suffix, shouldRedirect } of [
   })
 }
 
+// Exclude pattern: the rule applies unless the URL also matches the exclude pattern.
+// Feature: https://github.com/rxliuli/redirector/issues/36
+for (const { path, shouldRedirect } of [
+  { path: '/excl/posts/123', shouldRedirect: true },
+  { path: '/excl/home', shouldRedirect: false },
+]) {
+  test(`exclude pattern: ${path} → ${shouldRedirect ? 'redirected' : 'no redirect'}`, async ({
+    serviceWorker,
+    context,
+    testServer,
+  }) => {
+    await serviceWorker.evaluate(async (testServerUrl) => {
+      await chrome.storage.sync.set({
+        rules: [
+          {
+            from: `${testServerUrl}/excl/(.*)`,
+            exclude: `${testServerUrl}/excl/home`,
+            mode: 'regex',
+            to: `${testServerUrl}/excl-target/$1`,
+          },
+        ] satisfies MatchRule[],
+      })
+    }, testServer.url)
+
+    await context.pages()[0].waitForTimeout(500)
+
+    const page = await context.newPage()
+    await page
+      .goto(`${testServer.url}${path}`, { timeout: 5000 })
+      .catch(() => {})
+    await page.waitForTimeout(1000)
+
+    const expected = shouldRedirect
+      ? `${testServer.url}${path.replace('/excl/', '/excl-target/')}`
+      : `${testServer.url}${path}`
+    expect(page.url()).toBe(expected)
+
+    await page.close()
+  })
+}
+
 // Test with local test server to avoid Google's bot detection
 // This test validates the fix for handling extension redirects after website 302 redirections
 // Fix: https://discord.com/channels/1376360845344374784/1380033039681196102/1445806872790696067

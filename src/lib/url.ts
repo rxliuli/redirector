@@ -3,6 +3,7 @@ import 'urlpattern-polyfill'
 export interface MatchRule {
   from: string
   to: string
+  exclude?: string
   mode?: 'regex' | 'url-pattern'
   enabled?: boolean
   testUrl?: string
@@ -11,6 +12,8 @@ export interface MatchRule {
 export interface MatchResult {
   match: boolean
   url: string
+  // true when `from` matched but the exclude pattern blocked the redirect
+  excluded?: boolean
 }
 
 const pipeFunctions: Record<string, (value: string) => string> = {
@@ -59,6 +62,29 @@ function templateReplace(
   )
 }
 
+function isRegexExcluded(rule: MatchRule, url: string): boolean {
+  if (!rule.exclude) {
+    return false
+  }
+  try {
+    return new RegExp(rule.exclude, 'i').test(url)
+  } catch {
+    // An invalid exclude pattern never excludes anything
+    return false
+  }
+}
+
+function isURLPatternExcluded(rule: MatchRule, url: string): boolean {
+  if (!rule.exclude) {
+    return false
+  }
+  try {
+    return new URLPattern(rule.exclude).test(url)
+  } catch {
+    return false
+  }
+}
+
 function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   let regex: RegExp
   try {
@@ -68,6 +94,9 @@ function isRegexMatch(rule: MatchRule, url: string): MatchResult {
   }
   const r = regex.exec(url)
   if (r) {
+    if (isRegexExcluded(rule, url)) {
+      return { match: false, url: url, excluded: true }
+    }
     let replaced = rule.to
 
     replaced = templateReplace(replaced, (path) => {
@@ -90,6 +119,9 @@ function isRegexMatch(rule: MatchRule, url: string): MatchResult {
 function isURLPatternMatch(rule: MatchRule, url: string): MatchResult {
   const r = new URLPattern(rule.from)
   if (r.test(url)) {
+    if (isURLPatternExcluded(rule, url)) {
+      return { match: false, url: url, excluded: true }
+    }
     const matched = r.exec(url)!
 
     const replaced = templateReplace(rule.to, (path) => {
@@ -123,13 +155,19 @@ export function matchRule(rule: MatchRule, url: string): MatchResult {
       : rule.mode === 'url-pattern'
       ? [isURLPatternMatch]
       : [isRegexMatch, isURLPatternMatch]
+  let excluded = false
   for (const fn of list) {
     try {
       const r = fn(rule, url)
       if (r.match) {
         return r
       }
+      if (r.excluded) {
+        excluded = true
+      }
     } catch {}
   }
-  return { match: false, url: url }
+  return excluded
+    ? { match: false, url: url, excluded: true }
+    : { match: false, url: url }
 }
