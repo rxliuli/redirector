@@ -6,7 +6,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   manifestVersion: 3,
   srcDir: 'src',
-  modules: ['@wxt-dev/module-svelte'],
+  modules: ['@wxt-dev/module-svelte', '@extport/wxt'],
+  extport: {
+    appCategory: 'public.app-category.productivity',
+    bundleIdentifier: 'com.rxliuli.URL-Redirector',
+    developmentTeam: 'N2X78TUUFG',
+  },
   webExt: {
     disabled: true,
   },

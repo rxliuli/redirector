@@ -42,6 +42,9 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
     devDependencies:
+      '@extport/wxt':
+        specifier: ^0.0.3
+        version: 0.0.3(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)
       '@hono/node-server':
         specifier: ^1.19.6
         version: 1.19.6(hono@4.10.7)
@@ -488,6 +491,10 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@extport/wxt@0.0.3':
+    resolution: {integrity: sha512-d9bIhwrb+YQnDEI9X47QFKeQhvH2Pl+qZ8Xy/NrSV3BO49WJfIPTbiK3OpuqVO+7BaJvjWkF1euzJ01+QckBkQ==}
+    engines: {node: '>=18'}
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -2726,6 +2733,26 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.7':
     optional: true
+
+  '@extport/wxt@0.0.3(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)':
+    optionalDependencies:
+      wxt: 0.20.26(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)
+    transitivePeerDependencies:
+      - '@types/node'
+      - canvas
+      - eslint
+      - jiti
+      - less
+      - lightningcss
+      - rollup
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
 
   '@floating-ui/core@1.7.3':
     dependencies:
