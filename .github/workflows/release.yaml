@@ -104,11 +104,16 @@ jobs:
       - uses: extport-dev/actions/safari-build@v1
         with:
           # project-path/team-id inferred from extport.config.json (synced by
-          # @extport/wxt). Automatic code signing via -allowProvisioningUpdates
-          # — no certificate/provisioning-profile secrets needed anymore.
+          # @extport/wxt). Automatic code signing via -allowProvisioningUpdates,
+          # reusing the certificate below instead of minting a new one every
+          # run — an ephemeral runner has no local keychain, so without this
+          # it silently burns one Apple certificate per run until the account
+          # hits Apple's cap.
           issuer-id: ${{ secrets.APPLE_API_ISSUER }}
           key-id: ${{ secrets.APPLE_API_KEY_ID }}
           key-base64: ${{ secrets.APPLE_API_KEY }}
+          certificate-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           version: ${{ needs.version.outputs.version }}
 
       - name: Register the Safari version with extport
