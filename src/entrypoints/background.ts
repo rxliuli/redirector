@@ -24,6 +24,13 @@ export default defineBackground(() => {
     await reloadRulesFromActiveMode()
   })
 
+  // Registering this listener makes Chrome/Firefox wake the service worker
+  // as soon as the browser process launches, instead of waiting for the
+  // first navigation to do it. That gives rulesReady a head start on cold
+  // start, shrinking (but not eliminating) the "real page loads before the
+  // redirect kicks in" race. See issue #40.
+  browser.runtime.onStartup.addListener(() => {})
+
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === 'local' && changes[RULES_STORAGE_MODE_KEY]) {
       const nextMode = changes[RULES_STORAGE_MODE_KEY].newValue as
