@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { checkRuleChain } from '../check'
-import { MatchRule } from '../url'
+import type { MatchRule } from '../url'
 
 describe('checkRule', () => {
   it('valid rule', async () => {

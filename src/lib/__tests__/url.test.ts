@@ -1,4 +1,4 @@
-import { MatchRule, matchRule } from '../url'
+import { type MatchRule, matchRule } from '../url'
 import { describe, expect, it } from 'vitest'
 
 describe('regex match', () => {

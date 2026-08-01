@@ -6,7 +6,7 @@ import {
   writeRulesStorageMode,
   writeRulesToMode,
 } from "$lib/storage";
-import { MatchRule } from "$lib/url";
+import type { MatchRule } from "$lib/url";
 import { get, writable } from "svelte/store";
 
 const STORAGE_QUOTA_EXCEEDED_RE = /quota/i;

@@ -1,5 +1,5 @@
 import { checkRuleChain } from './check'
-import { MatchRule } from './url'
+import type { MatchRule } from './url'
 
 export const store = {
   rules: [] as MatchRule[],

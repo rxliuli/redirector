@@ -10,7 +10,6 @@
   import { Checkbox } from '$lib/components/ui/checkbox'
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
   import {
-    CheckIcon,
     ChevronDown,
     ChevronUp,
     SquarePenIcon,
@@ -240,11 +239,7 @@
               : 'Auto'}
         </TableCell>
         <TableCell>
-          <Checkbox bind:checked={rule.enabled} title="Enabled">
-            {#if rule.enabled}
-              <CheckIcon class="h-4 w-4" />
-            {/if}
-          </Checkbox>
+          <Checkbox bind:checked={rule.enabled} title="Enabled" />
         </TableCell>
         <TableCell class="truncate" title={rule.from}>
           {rule.from}

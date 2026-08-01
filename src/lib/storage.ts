@@ -1,4 +1,4 @@
-import { MatchRule } from "./url";
+import type { MatchRule } from "./url";
 
 export type RulesStorageMode = "sync" | "local";
 

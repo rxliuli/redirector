@@ -1,6 +1,6 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { MatchRule } from '$lib/url'
+import type { MatchRule } from '$lib/url'
 import { test, expect, BrowserTestContext } from './fixtures'
 
 // Test regex capture group redirect with query params (local server, no external dependency)

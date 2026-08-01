@@ -6,7 +6,7 @@ import {
   RULES_STORAGE_MODE_KEY,
   type RulesStorageMode,
 } from '$lib/storage'
-import { MatchRule } from '$lib/url'
+import type { MatchRule } from '$lib/url'
 
 export default defineBackground(() => {
   let activeStorageMode: RulesStorageMode = 'sync'

@@ -1,5 +1,5 @@
 import { readActiveRules } from './storage'
-import { matchRule, MatchResult, MatchRule } from './url'
+import { matchRule, type MatchResult, type MatchRule } from './url'
 
 export type CheckResult = {
   status:
