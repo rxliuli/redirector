@@ -16,7 +16,7 @@ The extension sends **at most one anonymous ping per day** to our own infrastruc
 
 From the network request itself our server derives the browser, operating system, and country (the IP address is used only for the country lookup and is **not stored**). Raw pings are deleted after 90 days; only aggregate daily counts are kept. No URL you visit, no rule you configure, and no other behavioral data is ever included.
 
-**This is on by default and can be turned off at any time** — open Redirector's options page, click the **⋮** menu, and toggle **Anonymous Usage Stats** off. Turning it off takes effect immediately and no further pings are sent.
+This is a fixed part of the extension, not a setting inside it. Firefox users get their browser's own control over it — decline "Share technical and interaction data" in the install prompt, or manage it later under `about:addons` → Redirector → Permissions.
 
 ## Data Sharing
 

@@ -1,11 +1,9 @@
 <script lang="ts">
   import {
-    analyticsEnabled,
     isStorageQuotaExceededError,
     replaceRules,
     rules,
     rulesStorageMode,
-    setAnalyticsEnabled,
     setRulesStorageMode,
   } from '../store'
   import { Button } from '$lib/components/ui/button'
@@ -45,7 +43,6 @@
   }>({ open: false })
   let actionsMenuOpen = $state(false)
   let switchingStorageMode = $state(false)
-  let switchingAnalytics = $state(false)
 
   function sortRules(upOrDown: string, index: number) {
     if (upOrDown == 'up') {
@@ -148,21 +145,6 @@
     }
   }
 
-  async function toggleAnalytics() {
-    if (switchingAnalytics) {
-      return
-    }
-    switchingAnalytics = true
-    try {
-      await setAnalyticsEnabled(!$analyticsEnabled)
-    } catch (error) {
-      toast.error('Failed to update usage stats setting')
-      console.error('Failed to toggle analytics', error)
-    } finally {
-      switchingAnalytics = false
-    }
-  }
-
   async function importRules() {
     const input = document.createElement('input')
     input.type = 'file'
@@ -220,18 +202,6 @@
           disabled={switchingStorageMode}
         >
           Sync Storage
-        </DropdownMenu.CheckboxItem>
-      </div>
-      <DropdownMenu.Separator />
-      <div class="flex items-center gap-1 px-1 pb-1">
-        <DropdownMenu.CheckboxItem
-          checked={$analyticsEnabled}
-          onclick={toggleAnalytics}
-          class="flex-1"
-          title="One anonymous ping/day — install count, version, language. See Privacy Policy."
-          disabled={switchingAnalytics}
-        >
-          Anonymous Usage Stats
         </DropdownMenu.CheckboxItem>
       </div>
       <DropdownMenu.Separator />
