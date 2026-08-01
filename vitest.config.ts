@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import path from 'path'
-import { BrowserCommands } from '@vitest/browser/context'
+import { type BrowserCommands } from 'vitest/browser'
 import { type BrowserCommandContext } from 'vitest/node'
 import { readFile } from 'fs/promises'
 import { playwright } from '@vitest/browser-playwright'
@@ -32,6 +32,13 @@ declare module '@vitest/browser/context' {
   interface Locator {
     element(): HTMLElement
   }
+}
+
+// BrowserCommands is declared in 'vitest/browser', not '@vitest/browser/context'
+// (which only imports and re-exports it) — augmenting the wrong module compiles
+// fine but silently fails to merge, since `commands` in test files resolves the
+// type from its true declaring module. https://vitest.dev/api/browser/commands
+declare module 'vitest/browser' {
   interface BrowserCommands {
     waitForDownload: () => Promise<{
       suggestedFilename: string
