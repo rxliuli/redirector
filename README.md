@@ -100,7 +100,7 @@ The `{{}}` syntax supports chaining transformations on captured values:
 
 ## Privacy
 
-This extension processes all redirection rules locally and does not collect or transmit any user data.
+Redirection rules are matched entirely on your device — no URL or page content is ever transmitted by that feature. Redirector does send one anonymous daily usage ping (install count and version only, no browsing data), on by default and toggleable in the options menu. See [PRIVACY.md](./PRIVACY.md) for the full policy.
 
 ## Contributions
 

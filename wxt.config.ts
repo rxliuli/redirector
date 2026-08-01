@@ -8,9 +8,18 @@ export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-svelte', '@extport/wxt'],
   extport: {
-    appCategory: 'public.app-category.productivity',
-    bundleIdentifier: 'com.rxliuli.URL-Redirector',
-    developmentTeam: 'N2X78TUUFG',
+    extension: 'ext_CA0VFul4shvoRANonrAY',
+    safari: {
+      appCategory: 'public.app-category.productivity',
+      bundleIdentifier: 'com.rxliuli.URL-Redirector',
+      developmentTeam: 'N2X78TUUFG',
+    },
+    // Daily anonymous usage ping (install count + version + language,
+    // nothing else) + the Firefox data-collection declaration, both
+    // injected by @extport/wxt. On by default (same opt-out model as
+    // Firefox's own install-prompt toggle) with a visible switch in the
+    // options menu — see PRIVACY.md "Anonymous Usage Statistics".
+    analytics: true,
   },
   webExt: {
     disabled: true,
@@ -43,6 +52,7 @@ export default defineConfig({
         gecko: {
           id: 'redirector@rxliuli.com',
         },
+        gecko_android: {},
       }
     }
     if (env.browser === 'safari') {

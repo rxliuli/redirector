@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      '@extport/sdk':
+        specifier: 0.0.6
+        version: 0.0.6
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
@@ -43,8 +46,8 @@ importers:
         version: 10.1.0
     devDependencies:
       '@extport/wxt':
-        specifier: ^0.0.3
-        version: 0.0.3(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)
+        specifier: ^0.0.5
+        version: 0.0.5(@extport/sdk@0.0.6)(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)
       '@hono/node-server':
         specifier: ^1.19.6
         version: 1.19.6(hono@4.10.7)
@@ -492,9 +495,22 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@extport/wxt@0.0.3':
-    resolution: {integrity: sha512-d9bIhwrb+YQnDEI9X47QFKeQhvH2Pl+qZ8Xy/NrSV3BO49WJfIPTbiK3OpuqVO+7BaJvjWkF1euzJ01+QckBkQ==}
+  '@extport/sdk@0.0.6':
+    resolution: {integrity: sha512-7njoW6A8oOcxx+64rQRf6fJcNe2rOOOSm6WIYvUAeDIsEs/MBBM0uraws90IzRItID98vLwB+Ls9XaNzKgPDqA==}
+    peerDependencies:
+      react: '>=18'
+    peerDependenciesMeta:
+      react:
+        optional: true
+
+  '@extport/wxt@0.0.5':
+    resolution: {integrity: sha512-70roUt0YRQhqoiIesOS03YldiD2BfAs8xzILxZWvPlI6JzOv/0ifqKcRwuyS3ZnuNnbdH9fsihVXJWYrSXFBFA==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@extport/sdk': '>=0.0.5'
+    peerDependenciesMeta:
+      '@extport/sdk':
+        optional: true
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -1417,6 +1433,9 @@ packages:
 
   htmlparser2@10.0.0:
     resolution: {integrity: sha512-TwAZM+zE5Tq3lrEHvOlvwgj1XLWQCtaaibSN11Q+gGBAS7Y1uZSWwXXRe4iF6OXnaq1riyQAPFOBtYc77Mxq0g==}
+
+  idb-keyval@6.3.0:
+    resolution: {integrity: sha512-um+2dgAWmYsu615EXpWVwSmapJhON0G43t3Ka/EVaohzPQXSMqKEqeDK/oIW3Ow+BXaF2PvSc+oBTFp793A5Ow==}
 
   immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
@@ -2734,8 +2753,13 @@ snapshots:
   '@esbuild/win32-x64@0.27.7':
     optional: true
 
-  '@extport/wxt@0.0.3(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)':
+  '@extport/sdk@0.0.6':
+    dependencies:
+      idb-keyval: 6.3.0
+
+  '@extport/wxt@0.0.5(@extport/sdk@0.0.6)(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)':
     optionalDependencies:
+      '@extport/sdk': 0.0.6
       wxt: 0.20.26(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)
     transitivePeerDependencies:
       - '@types/node'
@@ -3624,6 +3648,8 @@ snapshots:
       domhandler: 5.0.3
       domutils: 3.2.2
       entities: 6.0.1
+
+  idb-keyval@6.3.0: {}
 
   immediate@3.0.6: {}
 
