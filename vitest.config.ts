@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
+import react from '@vitejs/plugin-react'
 import path from 'path'
 import { type BrowserCommands } from 'vitest/browser'
 import { type BrowserCommandContext } from 'vitest/node'
@@ -53,9 +53,9 @@ declare module 'vitest/browser' {
 }
 
 export default defineConfig({
-  plugins: [svelte()],
+  plugins: [react()],
   test: {
-    include: ['src/**/*.{test,spec}.{js,ts}'],
+    include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
     exclude: ['src/**/e2e/*'],
     browser: {
       enabled: true,

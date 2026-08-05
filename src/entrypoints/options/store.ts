@@ -1,104 +1,130 @@
 import {
-  normalizeRules,
-  readRulesFromMode,
-  readRulesStorageMode,
-  type RulesStorageMode,
-  writeRulesStorageMode,
-  writeRulesToMode,
+	normalizeRules,
+	readRulesFromMode,
+	readRulesStorageMode,
+	type RulesStorageMode,
+	writeRulesStorageMode,
+	writeRulesToMode,
 } from "$lib/storage";
 import type { MatchRule } from "$lib/url";
-import { get, writable } from "svelte/store";
+import { useEffect, useSyncExternalStore } from "react";
 
 const STORAGE_QUOTA_EXCEEDED_RE = /quota/i;
 
-const rulesStorageModeState = writable<RulesStorageMode>("sync");
-const rulesState = writable<MatchRule[]>([]);
+function createStore<T>(initial: T) {
+	let value = initial;
+	const listeners = new Set<() => void>();
+	return {
+		get: () => value,
+		set(next: T) {
+			value = next;
+			listeners.forEach((listener) => listener());
+		},
+		subscribe(listener: () => void) {
+			listeners.add(listener);
+			return () => {
+				listeners.delete(listener);
+			};
+		},
+	};
+}
+
+const rulesStorageModeState = createStore<RulesStorageMode>("sync");
+const rulesState = createStore<MatchRule[]>([]);
 
 let initialized = false;
 let loadingPromise: Promise<void> | undefined;
 
 async function ensureInitialized() {
-  if (initialized) {
-    return;
-  }
-  if (loadingPromise) {
-    return loadingPromise;
-  }
-  loadingPromise = (async () => {
-    const mode = await readRulesStorageMode();
-    rulesStorageModeState.set(mode);
-    rulesState.set(await readRulesFromMode(mode));
-    initialized = true;
-  })().finally(() => {
-    loadingPromise = undefined;
-  });
-  return loadingPromise;
+	if (initialized) {
+		return;
+	}
+	if (loadingPromise) {
+		return loadingPromise;
+	}
+	loadingPromise = (async () => {
+		const mode = await readRulesStorageMode();
+		rulesStorageModeState.set(mode);
+		rulesState.set(await readRulesFromMode(mode));
+		initialized = true;
+	})().finally(() => {
+		loadingPromise = undefined;
+	});
+	return loadingPromise;
 }
 
 async function persistRules(nextRules: MatchRule[]) {
-  await ensureInitialized();
-  const mode = get(rulesStorageModeState);
-  const normalized = normalizeRules(nextRules);
-  await writeRulesToMode(mode, normalized);
-  return normalized;
+	await ensureInitialized();
+	const mode = rulesStorageModeState.get();
+	const normalized = normalizeRules(nextRules);
+	await writeRulesToMode(mode, normalized);
+	return normalized;
 }
 
 export function isStorageQuotaExceededError(error: unknown): boolean {
-  if (error instanceof Error) {
-    return STORAGE_QUOTA_EXCEEDED_RE.test(error.message);
-  }
-  if (typeof error === "string") {
-    return STORAGE_QUOTA_EXCEEDED_RE.test(error);
-  }
-  return false;
+	if (error instanceof Error) {
+		return STORAGE_QUOTA_EXCEEDED_RE.test(error.message);
+	}
+	if (typeof error === "string") {
+		return STORAGE_QUOTA_EXCEEDED_RE.test(error);
+	}
+	return false;
 }
-
-export const rulesStorageMode = {
-  subscribe: rulesStorageModeState.subscribe,
-};
 
 export async function setRulesStorageMode(
-  mode: RulesStorageMode,
+	mode: RulesStorageMode,
 ): Promise<void> {
-  await ensureInitialized();
-  const previousMode = get(rulesStorageModeState);
-  if (previousMode === mode) {
-    return;
-  }
-  const currentRules = await readRulesFromMode(previousMode);
-  await writeRulesToMode(mode, currentRules);
-  await writeRulesStorageMode(mode);
-  rulesStorageModeState.set(mode);
-  rulesState.set(currentRules);
+	await ensureInitialized();
+	const previousMode = rulesStorageModeState.get();
+	if (previousMode === mode) {
+		return;
+	}
+	const currentRules = await readRulesFromMode(previousMode);
+	await writeRulesToMode(mode, currentRules);
+	await writeRulesStorageMode(mode);
+	rulesStorageModeState.set(mode);
+	rulesState.set(currentRules);
 }
 
+// Optimistic writer: updates the in-memory state synchronously and persists
+// in the background; the Dataset tests rely on the synchronous update.
 export const rules = {
-  subscribe(run: (value: MatchRule[]) => void) {
-    ensureInitialized().catch((error) => {
-      console.error("Failed to initialize rules store", error);
-    });
-    return rulesState.subscribe(run);
-  },
-  set(value: MatchRule[]) {
-    const normalized = normalizeRules(value);
-    rulesState.set(normalized);
-    void persistRules(normalized).catch((error) => {
-      console.error("Failed to persist rules", error);
-    });
-  },
-  update(updater: (value: MatchRule[]) => MatchRule[]) {
-    const nextValue = updater(get(rulesState));
-    rules.set(nextValue);
-  },
+	get: rulesState.get,
+	set(value: MatchRule[]) {
+		const normalized = normalizeRules(value);
+		rulesState.set(normalized);
+		void persistRules(normalized).catch((error) => {
+			console.error("Failed to persist rules", error);
+		});
+	},
+	update(updater: (value: MatchRule[]) => MatchRule[]) {
+		rules.set(updater(rulesState.get()));
+	},
 };
 
 export async function addRule(rule: MatchRule): Promise<void> {
-  await ensureInitialized();
-  const normalized = await persistRules([rule, ...get(rulesState)]);
-  rulesState.set(normalized);
+	await ensureInitialized();
+	const normalized = await persistRules([rule, ...rulesState.get()]);
+	rulesState.set(normalized);
 }
 
 export async function replaceRules(nextRules: MatchRule[]): Promise<void> {
-  const normalized = await persistRules(nextRules);
-  rulesState.set(normalized);
+	const normalized = await persistRules(nextRules);
+	rulesState.set(normalized);
+}
+
+export function useRules(): MatchRule[] {
+	useEffect(() => {
+		ensureInitialized().catch((error) => {
+			console.error("Failed to initialize rules store", error);
+		});
+	}, []);
+	return useSyncExternalStore(rulesState.subscribe, rulesState.get);
+}
+
+export function useRulesStorageMode(): RulesStorageMode {
+	return useSyncExternalStore(
+		rulesStorageModeState.subscribe,
+		rulesStorageModeState.get,
+	);
 }

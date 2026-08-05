@@ -1,12 +1,11 @@
-import { defineConfig, UserManifest } from 'wxt'
-import path from 'path'
+import { defineConfig, type UserManifest } from 'wxt'
 import tailwindcss from '@tailwindcss/vite'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   manifestVersion: 3,
   srcDir: 'src',
-  modules: ['@wxt-dev/module-svelte', '@extport/wxt'],
+  modules: ['@wxt-dev/module-react', '@extport/wxt'],
   extport: {
     extension: 'ext_CA0VFul4shvoRANonrAY',
     safari: {
@@ -67,10 +66,8 @@ export default defineConfig({
   },
   vite: () => ({
     resolve: {
-      alias: {
-        $lib: path.resolve('./src/lib'),
-      },
+      tsconfigPaths: true,
     },
-    plugins: [tailwindcss() as any],
+    plugins: [tailwindcss()] as any,
   }),
 })

@@ -1,7 +1,8 @@
+/// <reference types="chrome" />
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import type { MatchRule } from '$lib/url'
-import { test, expect, BrowserTestContext } from './fixtures'
+import { test, expect, type BrowserTestContext } from './fixtures'
 
 // Test regex capture group redirect with query params (local server, no external dependency)
 test('redirect with regex capture groups on query params', async ({
@@ -21,7 +22,7 @@ test('redirect with regex capture groups on query params', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
   await page
@@ -58,7 +59,7 @@ for (const { suffix, shouldRedirect } of [
       })
     }, testServer.url)
 
-    await context.pages()[0].waitForTimeout(500)
+    await context.pages()[0]!.waitForTimeout(500)
 
     const page = await context.newPage()
     await page
@@ -99,7 +100,7 @@ for (const { path, shouldRedirect } of [
       })
     }, testServer.url)
 
-    await context.pages()[0].waitForTimeout(500)
+    await context.pages()[0]!.waitForTimeout(500)
 
     const page = await context.newPage()
     await page
@@ -139,7 +140,7 @@ test('cold service worker: direct navigation still redirects', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -188,7 +189,7 @@ test('cold service worker: cross-origin 302 target still redirects', async ({
       })
     }, testServer.url)
 
-    await context.pages()[0].waitForTimeout(500)
+    await context.pages()[0]!.waitForTimeout(500)
 
     const page = await context.newPage()
 
@@ -239,7 +240,7 @@ test('handle 302 redirect chain with url-pattern', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -291,7 +292,7 @@ test('prevent circular redirects', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   // Enable console logging to verify circular redirect detection
   const consoleMessages: string[] = []
@@ -333,7 +334,7 @@ test('prevent circular redirects', async ({
   await page.close()
 
   // Wait for the redirect counter to reset (3 seconds)
-  await context.pages()[0].waitForTimeout(3500)
+  await context.pages()[0]!.waitForTimeout(3500)
 })
 
 // Test that circular redirect detection resets after timeout
@@ -360,7 +361,7 @@ test('circular redirect detection resets after timeout', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const consoleMessages: string[] = []
   serviceWorker.on('console', (msg) => {
@@ -422,7 +423,7 @@ test('prevent server-side bounce-back redirect loops', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const consoleMessages: string[] = []
   serviceWorker.on('console', (msg) => {
@@ -455,7 +456,7 @@ test('prevent server-side bounce-back redirect loops', async ({
   await page.close()
 
   // Allow the per-(tab,url) counter window to lapse before the next test
-  await context.pages()[0].waitForTimeout(3500)
+  await context.pages()[0]!.waitForTimeout(3500)
 })
 
 // Test multiple rules chaining redirects (like Reddit email link cleanup)
@@ -501,7 +502,7 @@ test('chain multiple redirect rules', async ({
     testServer.url,
   )
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   // Track redirects via console logs to verify internal chain processing
   const redirectLogs: string[] = []
@@ -578,7 +579,7 @@ test('chain multiple redirect rules', async ({
   await page.close()
 
   // Wait for redirect counter to reset
-  await context.pages()[0].waitForTimeout(3500)
+  await context.pages()[0]!.waitForTimeout(3500)
 })
 
 // Test that multiple rules with overlapping patterns chain correctly
@@ -612,7 +613,7 @@ test('multiple rules with overlapping patterns chain correctly', async ({
     testServer.url,
   )
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -658,7 +659,7 @@ test('preload requests should not trigger redirects', async ({
     testServer.url,
   )
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   // Track what the extension tries to redirect
   const consoleMessages: string[] = []
@@ -722,7 +723,7 @@ test('navigate to original page via shortcut', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -762,7 +763,7 @@ test('refresh stays on original after navigate-to-original', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -811,7 +812,7 @@ test('different URL in same tab redirects after navigate-to-original', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -857,7 +858,7 @@ test('new tab still redirects after navigate-to-original', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page1 = await context.newPage()
 
@@ -908,7 +909,7 @@ test('iframe navigations do not break navigate-to-original', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -958,7 +959,7 @@ test('iframe matching a redirect rule should not redirect the parent tab', async
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -999,7 +1000,7 @@ test('speculation rules prefetch with 302 should not redirect the tab', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
 
@@ -1044,7 +1045,7 @@ test('convergent redirect: different region redirects to target', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   const page = await context.newPage()
   await page
@@ -1073,7 +1074,7 @@ test('convergent redirect: target region is idempotent (no redirect)', async ({
     })
   }, testServer.url)
 
-  await context.pages()[0].waitForTimeout(500)
+  await context.pages()[0]!.waitForTimeout(500)
 
   // Idempotent case: /region-us/test matches the rule but produces the same URL
   // This should NOT be treated as a circular error - just stop the chain

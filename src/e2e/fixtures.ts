@@ -45,7 +45,7 @@ export const test = base.extend<BrowserTestContext>({
     await use(serviceWorker)
   },
   extensionId: async ({ serviceWorker }, use) => {
-    const extensionId = serviceWorker.url().split('/')[2]
+    const extensionId = serviceWorker.url().split('/')[2]!
     await use(extensionId)
   },
 })
