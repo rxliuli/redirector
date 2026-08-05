@@ -62,7 +62,7 @@ export default function RuleDialog({
 		exclude: rule?.exclude ?? "",
 		testUrl: rule?.testUrl ?? "",
 		mode: (rule?.mode ?? "regex") as MatchRule["mode"],
-		enabled: rule?.enabled ?? true,
+		disabled: rule?.disabled ?? false,
 	});
 	const [selectedTemplate, setSelectedTemplate] = useState<
 		string | undefined
@@ -89,7 +89,6 @@ export default function RuleDialog({
 				from: formState.from.trim(),
 				to: formState.to.trim(),
 				exclude: formState.exclude.trim() || undefined,
-				enabled: true,
 				mode: formState.mode,
 			};
 			const tempRules =
@@ -109,7 +108,7 @@ export default function RuleDialog({
 						from: formState.from.trim(),
 						to: formState.to.trim(),
 						exclude: formState.exclude.trim() || undefined,
-						enabled: formState.enabled,
+						disabled: formState.disabled || undefined,
 						mode: formState.mode,
 						testUrl: formState.testUrl.trim() || undefined,
 					},

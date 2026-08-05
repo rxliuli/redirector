@@ -26,7 +26,6 @@ describe('Storage Mode', () => {
   it('switching local -> sync fails gracefully on sync quota limit', async () => {
     const localRule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from-local',
       to: 'https://example.com/to-local',
     }
@@ -62,7 +61,6 @@ describe('List', () => {
   it('should render rules', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -77,7 +75,6 @@ describe('List', () => {
   })
   it('default mode is auto', async () => {
     const rule: MatchRule = {
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -88,7 +85,6 @@ describe('List', () => {
   it('mode is url-pattern', async () => {
     const rule: MatchRule = {
       mode: 'url-pattern',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -102,7 +98,6 @@ describe('List', () => {
       (_, i) =>
         ({
           mode: 'regex',
-          enabled: true,
           from: `https://example.com/from${i}`,
           to: `https://example.com/new${i}`,
         } satisfies MatchRule),
@@ -124,7 +119,6 @@ describe('Action', () => {
   it('toggle rule enabled in view', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -142,7 +136,6 @@ describe('Action', () => {
   it('edit rule', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -162,7 +155,6 @@ describe('Action', () => {
   it('edit rule cancel', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -181,13 +173,11 @@ describe('Action', () => {
   it('delete rule on view', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/1',
       to: 'https://example.com/2',
     }
@@ -202,13 +192,11 @@ describe('Action', () => {
   it('delete all rules(confirm)', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/1',
       to: 'https://example.com/2',
     }
@@ -225,13 +213,11 @@ describe('Action', () => {
   it('delete all rules(reject)', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/1',
       to: 'https://example.com/2',
     }
@@ -248,13 +234,11 @@ describe('Action', () => {
   it('delete rule on edit', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/1',
       to: 'https://example.com/2',
     }
@@ -267,13 +251,11 @@ describe('Action', () => {
   it('auto quit edit mode when delete rule', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/1',
       to: 'https://example.com/2',
     }
@@ -291,13 +273,11 @@ describe('Action', () => {
   it('move rule down', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from-1',
       to: 'https://example.com/new-1',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from-2',
       to: 'https://example.com/new-2',
     }
@@ -327,7 +307,6 @@ describe('Export and Import', () => {
   it('export', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -343,7 +322,6 @@ describe('Export and Import', () => {
   it('import', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
@@ -365,16 +343,65 @@ describe('Export and Import', () => {
       .element(screen.getByTitle('Enabled'))
       .toHaveAttribute('data-state', 'checked')
   })
+  it('import legacy enabled-field backup', async () => {
+    const screen = await render(<Dataset onAddRule={() => {}} />)
+    await Promise.all([
+      commands.waitForUpload({
+        name: 'rules.json',
+        mimeType: 'application/json',
+        text: JSON.stringify([
+          {
+            mode: 'regex',
+            from: 'https://example.com/on',
+            to: 'https://example.com/1',
+            enabled: true,
+          },
+          {
+            mode: 'regex',
+            from: 'https://example.com/off',
+            to: 'https://example.com/2',
+            enabled: false,
+          },
+        ]),
+      }),
+      screen.getByTitle('Actions').click(),
+      screen.getByTitle('Import').click(),
+    ])
+    await expect
+      .element(screen.getByText('https://example.com/on'))
+      .toBeInTheDocument()
+    const checkboxes = screen.getByTitle('Enabled')
+    await expect
+      .element(checkboxes.nth(0))
+      .toHaveAttribute('data-state', 'checked')
+    await expect
+      .element(checkboxes.nth(1))
+      .toHaveAttribute('data-state', 'unchecked')
+    // The legacy field must not survive into persisted data.
+    const mode = await storage.readRulesStorageMode()
+    const raw = (await browser.storage[mode].get('rules'))['rules']
+    expect(raw).toEqual([
+      {
+        mode: 'regex',
+        from: 'https://example.com/on',
+        to: 'https://example.com/1',
+      },
+      {
+        mode: 'regex',
+        from: 'https://example.com/off',
+        to: 'https://example.com/2',
+        disabled: true,
+      },
+    ])
+  })
   it('import on edit mode(confirm)', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/1',
       to: 'https://example.com/2',
     }
@@ -402,13 +429,11 @@ describe('Export and Import', () => {
   it('import on edit mode(reject)', async () => {
     const rule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from',
       to: 'https://example.com/new',
     }
     const rule2: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/1',
       to: 'https://example.com/2',
     }

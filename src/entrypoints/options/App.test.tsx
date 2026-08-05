@@ -13,7 +13,6 @@ describe("quota handling", () => {
 
     const existingRule: MatchRule = {
       mode: "regex",
-      enabled: true,
       from: "https://example.com/from-existing",
       to: "https://example.com/to-existing",
     };
@@ -70,7 +69,6 @@ describe("quota handling", () => {
         text: JSON.stringify([
           {
             mode: "regex",
-            enabled: true,
             from: "https://example.com/from-import",
             to: "https://example.com/to-import",
           } satisfies MatchRule,

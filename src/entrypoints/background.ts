@@ -1,12 +1,14 @@
 import { getRedirectUrl, store } from '$lib/redirect'
 import {
+  migrateRulesStorage,
+  normalizeRules,
   readRulesFromMode,
   readRulesStorageMode,
   RULES_KEY,
   RULES_STORAGE_MODE_KEY,
   type RulesStorageMode,
+  type StoredMatchRule,
 } from '$lib/storage'
-import type { MatchRule } from '$lib/url'
 
 export default defineBackground(() => {
   let activeStorageMode: RulesStorageMode = 'sync'
@@ -23,6 +25,8 @@ export default defineBackground(() => {
     activeStorageMode = mode
     await reloadRulesFromActiveMode()
   })
+
+  void rulesReady.then(() => migrateRulesStorage())
 
   // Registering this listener makes Chrome/Firefox wake the service worker
   // as soon as the browser process launches, instead of waiting for the
@@ -41,7 +45,11 @@ export default defineBackground(() => {
       return
     }
     if (areaName === activeStorageMode && changes[RULES_KEY]) {
-      store.rules = (changes[RULES_KEY].newValue as MatchRule[] | undefined) ?? []
+      // Sync can deliver rules written by an older extension version, so
+      // this path needs the same legacy-field normalization as reads.
+      store.rules = normalizeRules(
+        (changes[RULES_KEY].newValue as StoredMatchRule[] | undefined) ?? [],
+      )
     }
   })
 

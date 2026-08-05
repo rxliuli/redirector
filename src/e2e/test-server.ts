@@ -424,6 +424,27 @@ export function createTestServer(port = 3456) {
     `)
   })
 
+  // Legacy enabled-field migration test pages
+  app.get('/legacy/*', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Legacy Source</title></head>
+        <body><h1>Legacy test source: ${c.req.path}</h1></body>
+      </html>
+    `)
+  })
+
+  app.get('/legacy-target/*', (c) => {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Legacy Target</title></head>
+        <body><h1>Legacy test target: ${c.req.path}</h1></body>
+      </html>
+    `)
+  })
+
   const server = serve({ fetch: app.fetch, port })
 
   return {

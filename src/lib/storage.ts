@@ -5,8 +5,39 @@ export type RulesStorageMode = "sync" | "local";
 export const RULES_KEY = "rules";
 export const RULES_STORAGE_MODE_KEY = "rules-storage-mode";
 
-export function normalizeRules(rules: MatchRule[]): MatchRule[] {
-  return rules.map((rule) => ({ ...rule, enabled: rule.enabled ?? true }));
+// Rules as they may appear in storage or import files. `enabled` is the
+// pre-0.18 inverse of `disabled`; exported backups have unbounded lifetime,
+// so imports must accept it permanently.
+export type StoredMatchRule = MatchRule & { enabled?: boolean };
+
+export function normalizeRules(rules: StoredMatchRule[]): MatchRule[] {
+  return rules.map(({ enabled, disabled, ...rule }) =>
+    (disabled ?? enabled === false) ? { ...rule, disabled: true } : rule,
+  );
+}
+
+// One-time rewrite of stored rules into the disabled-field format (0.18).
+// Reads normalize in memory either way; this makes the data at rest match.
+// Safe to remove once pre-0.18 installs are negligible — normalizeRules
+// keeps accepting the legacy field for imports regardless.
+export async function migrateRulesStorage(): Promise<void> {
+  if (!hasBrowserStorageApi()) {
+    return;
+  }
+  for (const mode of ["sync", "local"] as const) {
+    try {
+      const result = await getStorageArea(mode).get(RULES_KEY);
+      const raw = (result[RULES_KEY] as StoredMatchRule[] | undefined) ?? [];
+      const needsRewrite = raw.some(
+        (rule) => "enabled" in rule || rule.disabled === false,
+      );
+      if (needsRewrite) {
+        await getStorageArea(mode).set({ [RULES_KEY]: normalizeRules(raw) });
+      }
+    } catch (error) {
+      console.error(`Failed to migrate ${mode} rules storage`, error);
+    }
+  }
 }
 
 function hasBrowserStorageApi() {
@@ -43,7 +74,7 @@ export async function readRulesFromMode(
   }
   const result = await getStorageArea(mode).get(RULES_KEY);
   return normalizeRules(
-    (result[RULES_KEY] as MatchRule[] | undefined) ?? [],
+    (result[RULES_KEY] as StoredMatchRule[] | undefined) ?? [],
   );
 }
 

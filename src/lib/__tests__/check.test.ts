@@ -89,7 +89,7 @@ describe('checkRule', () => {
       {
         from: '^https://example.com/(.*)',
         to: 'https://other.com/$1',
-        enabled: false,
+        disabled: true,
       },
     ]
     const result = checkRuleChain(rules, 'https://example.com/page')
@@ -100,9 +100,9 @@ describe('checkRule', () => {
     const disabledRule: MatchRule = {
       from: '^https://example.com/(.*)',
       to: 'https://other.com/$1',
-      enabled: false,
+      disabled: true,
     }
-    const enabledCopy = { ...disabledRule, enabled: true }
+    const { disabled, ...enabledCopy } = disabledRule
     const result = checkRuleChain([enabledCopy], 'https://example.com/page')
     expect(result).toEqual({
       status: 'matched',

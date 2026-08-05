@@ -5,7 +5,8 @@ export interface MatchRule {
   to: string
   exclude?: string
   mode?: 'regex' | 'url-pattern'
-  enabled?: boolean
+  // Absent means active; only explicitly disabled rules carry the field.
+  disabled?: boolean
   testUrl?: string
 }
 

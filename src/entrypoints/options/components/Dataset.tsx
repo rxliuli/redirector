@@ -26,6 +26,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "$lib/components/ui/table";
+import type { StoredMatchRule } from "$lib/storage";
 import type { MatchRule } from "$lib/url";
 import { uniqBy } from "es-toolkit";
 import {
@@ -68,9 +69,11 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 		});
 	}
 
-	function setRuleEnabled(index: number, enabled: boolean) {
+	function setRuleDisabled(index: number, disabled: boolean) {
 		rules.update((list) =>
-			list.map((r, i) => (i === index ? { ...r, enabled } : r)),
+			list.map((r, i) =>
+				i === index ? { ...r, disabled: disabled || undefined } : r,
+			),
 		);
 	}
 
@@ -176,14 +179,10 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 			if (file) {
 				try {
 					const text = await file.text();
-					const json = JSON.parse(text);
-					const nextRules = uniqBy(
-						[...json, ...rules.get()],
-						(it) => it.from,
-					).map((rule) => {
-						rule.enabled = rule.enabled ?? true;
-						return rule;
-					});
+					// Old exports carry the legacy `enabled` field; replaceRules
+					// normalizes it away.
+					const json = JSON.parse(text) as StoredMatchRule[];
+					const nextRules = uniqBy([...json, ...rules.get()], (it) => it.from);
 					await replaceRules(nextRules);
 					toast.success("Imported rules");
 				} catch (error) {
@@ -280,9 +279,9 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 							</TableCell>
 							<TableCell>
 								<Checkbox
-									checked={rule.enabled}
+									checked={!rule.disabled}
 									onCheckedChange={(checked) => {
-										setRuleEnabled(index, checked === true);
+										setRuleDisabled(index, checked !== true);
 									}}
 									title="Enabled"
 								/>

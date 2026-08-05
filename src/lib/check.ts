@@ -1,4 +1,3 @@
-import { readActiveRules } from './storage'
 import { matchRule, type MatchResult, type MatchRule } from './url'
 
 export type CheckResult = {
@@ -9,10 +8,6 @@ export type CheckResult = {
     | 'circular-redirect'
     | 'infinite-redirect'
   urls: string[]
-}
-
-export async function getEnabledRules() {
-  return (await readActiveRules()).filter((it) => it.enabled ?? true)
 }
 
 export interface CheckOptions {
@@ -26,7 +21,7 @@ export function checkRuleChain(
 ): CheckResult {
   const redirectUrls: string[] = []
   let currentUrl = url
-  const enabledRules = rules.filter((rule) => rule.enabled ?? true)
+  const enabledRules = rules.filter((rule) => !rule.disabled)
 
   for (let i = 0; i < (options?.maxRedirects ?? 5); i++) {
     let excluded = false

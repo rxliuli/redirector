@@ -1,6 +1,7 @@
 /// <reference types="chrome" />
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import type { StoredMatchRule } from '$lib/storage'
 import type { MatchRule } from '$lib/url'
 import { test, expect, type BrowserTestContext } from './fixtures'
 
@@ -131,7 +132,6 @@ test('cold service worker: direct navigation still redirects', async ({
     await chrome.storage.sync.set({
       rules: [
         {
-          enabled: true,
           from: `${testServerUrl}/product-pol-:product(.*)`,
           mode: 'url-pattern',
           to: `${testServerUrl}/product-eng-{{pathname.groups.product}}`,
@@ -180,7 +180,6 @@ test('cold service worker: cross-origin 302 target still redirects', async ({
       await chrome.storage.sync.set({
         rules: [
           {
-            enabled: true,
             from: `${testServerUrl}/product-pol-:product(.*)`,
             mode: 'url-pattern',
             to: `${testServerUrl}/product-eng-{{pathname.groups.product}}`,
@@ -1084,6 +1083,52 @@ test('convergent redirect: target region is idempotent (no redirect)', async ({
     .catch(() => {})
   await page.waitForTimeout(1000)
   expect(page.url()).toBe(`${testServer.url}/region-us/test`)
+
+  await page.close()
+})
+
+// Rules written by pre-0.18 versions carry `enabled` instead of `disabled`.
+// Sync storage can deliver them to a new install (old backup import, or an
+// old-version device sharing the sync profile), so the live extension must
+// honor both polarities: enabled:true redirects, enabled:false does not.
+test('legacy enabled-field rules from an old version still apply', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/legacy/on/(.*)`,
+          mode: 'regex',
+          to: `${testServerUrl}/legacy-target/$1`,
+          enabled: true,
+        },
+        {
+          from: `${testServerUrl}/legacy/off/(.*)`,
+          mode: 'regex',
+          to: `${testServerUrl}/legacy-target/$1`,
+          enabled: false,
+        },
+      ] satisfies StoredMatchRule[],
+    })
+  }, testServer.url)
+
+  await context.pages()[0]!.waitForTimeout(500)
+
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/legacy/on/x`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/legacy-target/x`)
+
+  await page
+    .goto(`${testServer.url}/legacy/off/x`, { timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(page.url()).toBe(`${testServer.url}/legacy/off/x`)
 
   await page.close()
 })

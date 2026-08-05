@@ -1,4 +1,5 @@
 import {
+	migrateRulesStorage,
 	normalizeRules,
 	readRulesFromMode,
 	readRulesStorageMode,
@@ -43,6 +44,9 @@ async function ensureInitialized() {
 		return loadingPromise;
 	}
 	loadingPromise = (async () => {
+		// Idempotent; also runs in the background at startup. Called here too
+		// in case the options page beats the background service worker to it.
+		await migrateRulesStorage();
 		const mode = await readRulesStorageMode();
 		rulesStorageModeState.set(mode);
 		rulesState.set(await readRulesFromMode(mode));

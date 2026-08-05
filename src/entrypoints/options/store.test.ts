@@ -19,7 +19,6 @@ describe('setRulesStorageMode', () => {
 
     const localRule: MatchRule = {
       mode: 'regex',
-      enabled: true,
       from: 'https://example.com/from-local',
       to: 'https://example.com/to-local',
     }
