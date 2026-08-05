@@ -257,13 +257,12 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 				</DropdownMenu>
 			</div>
 
-			<Table className="min-w-4xl w-full table-fixed">
+			<Table className="min-w-xl w-full table-fixed">
 				<TableHeader>
 					<TableRow>
 						<TableHead className="w-24">Mode</TableHead>
 						<TableHead className="w-16">Enabled</TableHead>
-						<TableHead className="w-1/2">From</TableHead>
-						<TableHead className="w-1/2">To</TableHead>
+						<TableHead>Rule</TableHead>
 						<TableHead className="w-32 text-right">Action</TableHead>
 					</TableRow>
 				</TableHeader>
@@ -286,11 +285,24 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 									title="Enabled"
 								/>
 							</TableCell>
-							<TableCell className="truncate" title={rule.from}>
-								{rule.from}
-							</TableCell>
-							<TableCell className="truncate" title={rule.to}>
-								{rule.to}
+							<TableCell>
+								{rule.name && (
+									<div className="truncate font-medium" title={rule.name}>
+										{rule.name}
+									</div>
+								)}
+								<div
+									className={
+										rule.name
+											? "truncate text-muted-foreground text-xs"
+											: "truncate"
+									}
+									title={`${rule.from} → ${rule.to}`}
+								>
+									<span>{rule.from}</span>
+									<span className="mx-1 text-muted-foreground">→</span>
+									<span>{rule.to}</span>
+								</div>
 							</TableCell>
 							<TableCell className="flex justify-end gap-1">
 								<div className="flex flex-col">

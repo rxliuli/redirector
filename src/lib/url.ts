@@ -1,6 +1,8 @@
 import 'urlpattern-polyfill'
 
 export interface MatchRule {
+  // Optional display label; never used for matching.
+  name?: string
   from: string
   to: string
   exclude?: string

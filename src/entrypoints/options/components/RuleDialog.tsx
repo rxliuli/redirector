@@ -57,6 +57,7 @@ export default function RuleDialog({
 	onSave,
 }: RuleDialogProps) {
 	const [formState, setFormState] = useState({
+		name: rule?.name ?? "",
 		from: rule?.from ?? "",
 		to: rule?.to ?? "",
 		exclude: rule?.exclude ?? "",
@@ -74,6 +75,7 @@ export default function RuleDialog({
 		if (template) {
 			setFormState((prev) => ({
 				...prev,
+				name: template.label,
 				from: template.value.from,
 				to: template.value.to,
 				exclude: template.value.exclude ?? "",
@@ -105,6 +107,7 @@ export default function RuleDialog({
 			try {
 				await onSave(
 					{
+						name: formState.name.trim() || undefined,
 						from: formState.from.trim(),
 						to: formState.to.trim(),
 						exclude: formState.exclude.trim() || undefined,
@@ -121,7 +124,7 @@ export default function RuleDialog({
 		}
 	}
 
-	const trimOnBlur = (field: "from" | "to" | "exclude") => () => {
+	const trimOnBlur = (field: "name" | "from" | "to" | "exclude") => () => {
 		setFormState((prev) => ({ ...prev, [field]: prev[field].trim() }));
 	};
 
@@ -187,6 +190,20 @@ export default function RuleDialog({
 						/>
 					</div>
 				)}
+
+				<div className="flex flex-col gap-2">
+					<Label htmlFor="ruleName">Name (optional)</Label>
+					<Input
+						id="ruleName"
+						placeholder="YouTube Shorts → Regular Player"
+						value={formState.name}
+						onChange={(e) => {
+							setFormState((prev) => ({ ...prev, name: e.target.value }));
+						}}
+						onBlur={trimOnBlur("name")}
+						title="Rule name"
+					/>
+				</div>
 
 				<div className="flex flex-col gap-2">
 					<Label htmlFor="mode">Mode</Label>

@@ -92,6 +92,21 @@ describe('List', () => {
     const screen = await render(<Dataset onAddRule={() => {}} />)
     await expect.element(screen.getByText('URL Pattern')).toBeInTheDocument()
   })
+  it('should render rule name above the URLs when present', async () => {
+    const rule: MatchRule = {
+      name: 'Example Redirect',
+      mode: 'regex',
+      from: 'https://example.com/from',
+      to: 'https://example.com/new',
+    }
+    rules.set([rule])
+    const screen = await render(<Dataset onAddRule={() => {}} />)
+    await expect
+      .element(screen.getByText('Example Redirect'))
+      .toBeInTheDocument()
+    await expect.element(screen.getByText(rule.from)).toBeInTheDocument()
+    await expect.element(screen.getByText(rule.to)).toBeInTheDocument()
+  })
   it('render large dataset', async () => {
     const list = Array.from(
       { length: 1000 },
@@ -151,6 +166,28 @@ describe('Action', () => {
     await expect
       .element(screen.getByText('https://example.com/new2'))
       .toBeInTheDocument()
+  })
+  it('edit rule name and clear it back to unnamed', async () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: 'https://example.com/from',
+      to: 'https://example.com/new',
+    }
+    rules.set([rule])
+    const screen = await render(<Dataset onAddRule={() => {}} />)
+    await screen.getByTitle('Edit').click()
+    await screen.getByTitle('Rule name').fill('My Redirect')
+    await screen.getByTitle('Save').click()
+    await expect.element(screen.getByText('My Redirect')).toBeInTheDocument()
+    expect(rules.get()[0]?.name).toBe('My Redirect')
+
+    await screen.getByTitle('Edit').click()
+    await screen.getByTitle('Rule name').fill('')
+    await screen.getByTitle('Save').click()
+    await expect
+      .element(screen.getByText('My Redirect'))
+      .not.toBeInTheDocument()
+    expect(rules.get()[0]?.name).toBeUndefined()
   })
   it('edit rule cancel', async () => {
     const rule: MatchRule = {
