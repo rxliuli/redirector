@@ -9,7 +9,7 @@ export function createTestServer(port = 3456) {
     const btnI = c.req.query('btnI')
 
     if (btnI !== undefined) {
-      const targetUrl = getFirstResult(query || '')
+      const targetUrl = getFirstResult(query || '', new URL(c.req.url).origin)
       return c.redirect(`/url?q=${encodeURIComponent(targetUrl)}`, 302)
     }
 
@@ -24,10 +24,24 @@ export function createTestServer(port = 3456) {
     `)
   })
 
+  // Mirrors Google's /url behavior for unsigned links (e.g. btnI without a
+  // valid usg signature): it renders a "Redirect Notice" page instead of
+  // redirecting, so only the extension can complete the jump to the target.
+  // Keep it non-redirecting — a server-side redirect here would make the
+  // 302-chain tests pass even when the extension does nothing.
   app.get('/url', (c) => {
     const targetUrl = c.req.query('q')
     if (targetUrl) {
-      return c.redirect(targetUrl, 302)
+      return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Redirect Notice</title></head>
+        <body>
+          <h1>Redirect Notice</h1>
+          <p>The page you were on is trying to send you to ${targetUrl}.</p>
+        </body>
+      </html>
+    `)
     }
     return c.text('No redirect URL', 400)
   })
@@ -455,10 +469,10 @@ export function createTestServer(port = 3456) {
   }
 }
 
-function getFirstResult(query: string): string {
+function getFirstResult(query: string, origin: string): string {
   const results: Record<string, string> = {
-    uw: 'http://localhost:3456/destination',
-    test: 'http://localhost:3456/destination',
+    uw: `${origin}/destination`,
+    test: `${origin}/destination`,
   }
-  return results[query.toLowerCase()] || 'http://localhost:3456/destination'
+  return results[query.toLowerCase()] || `${origin}/destination`
 }

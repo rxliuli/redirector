@@ -28,12 +28,36 @@ export default defineBackground(() => {
 
   void rulesReady.then(() => migrateRulesStorage())
 
-  // Registering this listener makes Chrome/Firefox wake the service worker
+  // A URL passed on the command line (open -a / xdg-open with the browser
+  // not yet running) can finish loading before this script even evaluates —
+  // those navigation events are lost entirely — so once rules are loaded,
+  // sweep the already-open tabs and redirect any that match.
+  const sweepOpenTabs = () => {
+    void rulesReady.then(async () => {
+      const tabs = await browser.tabs.query({})
+      for (const tab of tabs) {
+        if (tab.id === undefined || !tab.url) continue
+        handleRedirect(
+          { tabId: tab.id, url: tab.url, frameId: 0 },
+          'startupSweep',
+        )
+      }
+    })
+  }
+  // Registering onStartup also makes Chrome/Firefox wake the service worker
   // as soon as the browser process launches, instead of waiting for the
   // first navigation to do it. That gives rulesReady a head start on cold
-  // start, shrinking (but not eliminating) the "real page loads before the
-  // redirect kicks in" race. See issue #40.
-  browser.runtime.onStartup.addListener(() => {})
+  // start, shrinking the "real page loads before the redirect kicks in"
+  // race (issue #40).
+  browser.runtime.onStartup.addListener(sweepOpenTabs)
+  // Command-line-loaded unpacked extensions (dev / e2e) never get onStartup:
+  // every browser launch re-installs them and fires onInstalled with
+  // reason 'install' instead, so treat that as the cold-start signal too.
+  // Deliberately not on 'update' — a mid-session extension update must not
+  // suddenly redirect tabs the user is sitting on.
+  browser.runtime.onInstalled.addListener((details) => {
+    if (details.reason === 'install') sweepOpenTabs()
+  })
 
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === 'local' && changes[RULES_STORAGE_MODE_KEY]) {
@@ -184,8 +208,41 @@ export default defineBackground(() => {
       },
       { urls: ['<all_urls>'], types: ['main_frame'] },
     )
+    // For externally-initiated navigations (command-line URL, another app)
+    // Chrome can idle-freeze this worker right after the network events:
+    // timers stop and the queued webNavigation/tabs events are not delivered
+    // until something else wakes the worker — the commit is never seen and
+    // the redirect silently skips (the user's "refresh makes it work" case).
+    // After a main-frame request finishes, poll the tab's REAL url through
+    // sequential API roundtrips: each call doubles as a keep-alive that lets
+    // the queued events flush (setTimeout would never fire while frozen).
+    // Checking tabs.get rather than details.url keeps prefetches that never
+    // became tab content untouched (issue #19).
+    const COMPLETED_CHECK_ROUNDTRIPS = 300
     browser.webRequest.onCompleted.addListener(
-      (details) => confirmedRequestIds.delete(details.requestId),
+      (details) => {
+        confirmedRequestIds.delete(details.requestId)
+        if (details.tabId === -1) return
+        void (async () => {
+          await rulesReady
+          let lastUrl: string | undefined
+          for (let i = 0; i < COMPLETED_CHECK_ROUNDTRIPS; i++) {
+            const tab = await browser.tabs
+              .get(details.tabId)
+              .catch(() => undefined)
+            if (!tab) return
+            if (tab.url && tab.url !== lastUrl) {
+              lastUrl = tab.url
+              const { redirectUrl } = handleRedirect(
+                { tabId: details.tabId, url: tab.url, frameId: 0 },
+                'onCompletedCheck',
+              )
+              if (redirectUrl) return
+            }
+            if (tab.url && tab.status === 'complete') return
+          }
+        })()
+      },
       { urls: ['<all_urls>'], types: ['main_frame'] },
     )
     browser.webRequest.onErrorOccurred.addListener(
@@ -197,6 +254,18 @@ export default defineBackground(() => {
       if (details.frameId !== 0) return
       await rulesReady
       handleRedirect(details, 'onHistoryStateUpdated')
+    })
+    // URLs opened from outside the browser (command line, another app) get
+    // their webNavigation events dispatched only AFTER the whole webRequest
+    // chain has already run, so the confirmation chain above never sees them
+    // and a server 302's target commits without being checked. onCommitted
+    // reliably carries the committed (post-redirect) URL — re-check it here
+    // as a catch-all. Normal navigations that already redirected never commit
+    // the matching URL, so this stays a no-op for them.
+    browser.webNavigation.onCommitted.addListener(async (details) => {
+      if (details.frameId !== 0) return
+      await rulesReady
+      handleRedirect(details, 'onCommitted')
     })
   } else {
     browser.tabs.onUpdated.addListener(async (tabId, _changeInfo, tab) => {
