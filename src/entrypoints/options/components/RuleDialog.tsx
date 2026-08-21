@@ -9,36 +9,6 @@ import { Label } from "$lib/components/ui/label";
 import type { MatchRule } from "$lib/url";
 import RuleCheckResult from "./RuleCheckResult";
 
-const templates: { label: string; value: MatchRule & { testUrl: string } }[] = [
-	{
-		label: "Reddit → Old Reddit",
-		value: {
-			from: "^https://www.reddit.com/(.*)",
-			to: "https://old.reddit.com/$1",
-			mode: "regex",
-			testUrl: "https://www.reddit.com/r/cats",
-		},
-	},
-	{
-		label: "Google → DuckDuckGo",
-		value: {
-			from: "^https://www.google.com/search\\?q=(.*?)&.*$",
-			to: "https://duckduckgo.com/?q=$1",
-			mode: "regex",
-			testUrl: "https://www.google.com/search?q=js&oq=js",
-		},
-	},
-	{
-		label: "X/Twitter → Nitter",
-		value: {
-			from: "^https://(x|twitter)\\.com/(.*)",
-			to: "https://nitter.net/$2",
-			mode: "regex",
-			testUrl: "https://x.com/elonmusk/status/2047881966268117064",
-		},
-	},
-];
-
 interface RuleDialogProps {
 	open: boolean;
 	rule?: MatchRule;
@@ -65,26 +35,6 @@ export default function RuleDialog({
 		mode: (rule?.mode ?? "regex") as MatchRule["mode"],
 		disabled: rule?.disabled ?? false,
 	});
-	const [selectedTemplate, setSelectedTemplate] = useState<
-		string | undefined
-	>(undefined);
-
-	function applyTemplate(label: string) {
-		setSelectedTemplate(label);
-		const template = templates.find((t) => t.label === label);
-		if (template) {
-			setFormState((prev) => ({
-				...prev,
-				name: template.label,
-				from: template.value.from,
-				to: template.value.to,
-				exclude: template.value.exclude ?? "",
-				mode: template.value.mode ?? "regex",
-				testUrl: template.value.testUrl ?? "",
-			}));
-		}
-	}
-
 	const ruleCheckResult: CheckResult | null = useMemo(() => {
 		if (formState.from && formState.to && formState.testUrl) {
 			const currentRule = {
@@ -175,22 +125,6 @@ export default function RuleDialog({
 			}
 		>
 			<div className="grid gap-4">
-				{index === undefined && (
-					<div className="flex flex-col gap-2">
-						<Label>Template</Label>
-						<SelectGroup
-							value={selectedTemplate}
-							onValueChange={applyTemplate}
-							options={templates.map((t) => ({
-								label: t.label,
-								value: t.label,
-							}))}
-							placeholder="Start from a template (optional)"
-							className="w-full"
-						/>
-					</div>
-				)}
-
 				<div className="flex flex-col gap-2">
 					<Label htmlFor="ruleName">Name (optional)</Label>
 					<Input
