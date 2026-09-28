@@ -81,6 +81,12 @@ export default defineBackground(() => {
   const tabOriginalUrls = new Map<number, string>()
   // Track which tab+URL combos should skip redirection
   const tabSkippedUrls = new Map<number, string>()
+  // Track last redirect destination URLs per tab, to detect repeated redirect
+  // attempts for the same destination, due to the use of multiple events to
+  // handle redirection. This normally has no effect, however, if you redirect
+  // to a protocol URL which opens an external application, that application
+  // might open multiple times (usually twice).
+  let tabLastRedirectUrl = new Map<number, string>();
 
   // Detect cross-call redirect loops where the extension redirects A→B but the
   // server 302s B back to A, causing handleRedirect to fire on A again.
@@ -146,11 +152,19 @@ export default defineBackground(() => {
       )
       return {}
     }
+    const lastRedirectUrl = tabLastRedirectUrl.get(details.tabId);
+    if (lastRedirectUrl && lastRedirectUrl === redirectUrl) {
+      console.warn(
+        `[handleRedirect] repeated redirect detected (tab=${details.tabId}, url=${details.url}, source=${source}) — suppressing redirect to ${redirectUrl}`,
+      )
+      return {}
+    }
     console.log(
       `[handleRedirect] redirect (tab=${details.tabId}, from=${details.url}, to=${redirectUrl}, source=${source})`,
     )
-    // Save original URL before redirecting
+    // Save original URL and destination URL before redirecting
     tabOriginalUrls.set(details.tabId, details.url)
+    tabLastRedirectUrl.set(details.tabId, redirectUrl)
     browser.tabs.update(details.tabId, { url: redirectUrl })
     return { redirectUrl }
   }
@@ -164,6 +178,9 @@ export default defineBackground(() => {
     // onBeforeRequest checks it right after this listener fires.
     confirmedNavigations.add(key)
     await rulesReady
+    // This is the first event to fire when opening a page, so it shouldn't be
+    // detected as a repeat redirection
+    tabLastRedirectUrl.delete(details.tabId)
     handleRedirect(details, 'onBeforeNavigate')
   })
   if (!import.meta.env.SAFARI) {
@@ -302,6 +319,7 @@ export default defineBackground(() => {
     )
     tabSkippedUrls.set(tab.id, originalUrl)
     tabOriginalUrls.delete(tab.id)
+    tabLastRedirectUrl.delete(tab.id)
     await browser.tabs.update(tab.id, { url: originalUrl })
   }
 
@@ -317,6 +335,7 @@ export default defineBackground(() => {
 
   // Clean up state when tabs are closed
   browser.tabs.onRemoved.addListener((tabId) => {
+    tabLastRedirectUrl.delete(tabId)
     tabOriginalUrls.delete(tabId)
     tabSkippedUrls.delete(tabId)
     const prefix = `${tabId}|`
