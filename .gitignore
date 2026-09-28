@@ -30,3 +30,5 @@ test-results
 *.njsproj
 *.sln
 *.sw?
+*.sublime-project
+*.sublime-workspace
