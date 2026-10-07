@@ -1132,3 +1132,103 @@ test('legacy enabled-field rules from an old version still apply', async ({
 
   await page.close()
 })
+
+// Test whether redirects are deduplicated when triggered by page open. Used for
+// preventing duplicate external application opens via custom protocol handlers
+test('deduplicate redirects via page open', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/site/?$`,
+          mode: 'regex',
+          to: 'customapp://xyz',
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  const finalRedirectCount = serviceWorker.evaluate(() => {
+    let redirectCounter = 0
+    const origUpdate = chrome.tabs.update
+    chrome.tabs.update = function(this: typeof chrome.tabs, ...args: Parameters<typeof chrome.tabs.update>): void {
+      redirectCounter++
+      origUpdate.apply(this, args)
+    } as typeof chrome.tabs.update
+
+    return new Promise<number>((resolve) => {
+      setTimeout(() => {
+        resolve(redirectCounter)
+      }, 2000)
+    })
+  })
+
+  await context.pages()[0]!.waitForTimeout(500)
+
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/site`, {
+      timeout: 500,
+    })
+    .catch(() => {})
+  await page.waitForTimeout(1000)
+  expect(await finalRedirectCount).toBe(1)
+
+  await page.close()
+})
+
+// Test whether redirects are deduplicated when triggered by SPA routing. Used
+// for preventing duplicate external application opens via custom protocol
+// handlers
+test('deduplicate redirects via history.pushState', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/site/feed`,
+          mode: 'regex',
+          to: 'customapp://xyz',
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  const finalRedirectCount = serviceWorker.evaluate(() => {
+    let redirectCounter = 0
+    const origUpdate = chrome.tabs.update
+    chrome.tabs.update = function(this: typeof chrome.tabs, ...args: Parameters<typeof chrome.tabs.update>): void {
+      redirectCounter++
+      origUpdate.apply(this, args)
+    } as typeof chrome.tabs.update
+
+    return new Promise<number>((resolve) => {
+      setTimeout(() => {
+        resolve(redirectCounter)
+      }, 2000)
+    })
+  })
+
+  await context.pages()[0]!.waitForTimeout(500)
+
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/site`, {
+      timeout: 500,
+    })
+    .catch(() => {})
+  await page.evaluate(() => {
+    history.pushState({}, '', new URL('/site/feed', location.href))
+  })
+  await page.waitForTimeout(1000)
+  expect(await finalRedirectCount).toBe(1)
+
+  await page.close()
+})
