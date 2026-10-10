@@ -4,6 +4,7 @@ import { Hono } from 'hono'
 import type { StoredMatchRule } from '$lib/storage'
 import type { MatchRule } from '$lib/url'
 import { test, expect, type BrowserTestContext } from './fixtures'
+import { DEDUPE_WINDOW_MS } from '$lib/misc'
 
 // Test regex capture group redirect with query params (local server, no external dependency)
 test('redirect with regex capture groups on query params', async ({
@@ -1129,6 +1130,100 @@ test('legacy enabled-field rules from an old version still apply', async ({
     .catch(() => {})
   await page.waitForTimeout(1000)
   expect(page.url()).toBe(`${testServer.url}/legacy/off/x`)
+
+  await page.close()
+})
+
+// Test whether redirects are deduplicated when triggered by page open. Used for
+// preventing duplicate external application opens via custom protocol handlers
+test('deduplicate redirects via page open', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/site/?$`,
+          mode: 'regex',
+          to: 'customapp://xyz',
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await serviceWorker.evaluate(() => {
+    (self as any).__pwTestState_redirectCount = 0
+    const origUpdate = chrome.tabs.update
+    chrome.tabs.update = function(this: typeof chrome.tabs, ...args: Parameters<typeof chrome.tabs.update>): void {
+      (self as any).__pwTestState_redirectCount++
+      origUpdate.apply(this, args)
+    } as typeof chrome.tabs.update
+  })
+
+  await context.pages()[0]!.waitForTimeout(500)
+
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/site`, {
+      timeout: 500,
+    })
+    .catch(() => {})
+  expect(await serviceWorker.evaluate(() => (self as any).__pwTestState_redirectCount)).toBe(1)
+
+  await page.close()
+})
+
+// Test whether you can intentionally open an external app sequentially, despite
+// deduplication logic, via history.pushState. This test exists to prevent
+// over-active redirect deduplication implementations
+test('allow duplicate intentional redirects via history.pushState', async ({
+  serviceWorker,
+  context,
+  testServer,
+}) => {
+  await serviceWorker.evaluate(async (testServerUrl) => {
+    await chrome.storage.sync.set({
+      rules: [
+        {
+          from: `${testServerUrl}/site/feed`,
+          mode: 'regex',
+          to: 'customapp://xyz',
+        },
+      ] satisfies MatchRule[],
+    })
+  }, testServer.url)
+
+  await serviceWorker.evaluate(() => {
+    (self as any).__pwTestState_redirectCount = 0
+    const origUpdate = chrome.tabs.update
+    chrome.tabs.update = function(this: typeof chrome.tabs, ...args: Parameters<typeof chrome.tabs.update>): void {
+      (self as any).__pwTestState_redirectCount++
+      origUpdate.apply(this, args)
+    } as typeof chrome.tabs.update
+  })
+
+  await context.pages()[0]!.waitForTimeout(500)
+
+  const page = await context.newPage()
+  await page
+    .goto(`${testServer.url}/site`, {
+      timeout: 500,
+    })
+    .catch(() => {})
+  await page.evaluate(() => {
+    history.pushState({}, '', new URL('/site/feed', location.href))
+  })
+  expect(await serviceWorker.evaluate(() => (self as any).__pwTestState_redirectCount)).toBe(1)
+  await page.evaluate(() => {
+    history.pushState({}, '', new URL('/site/page', location.href))
+  })
+  await page.waitForTimeout(DEDUPE_WINDOW_MS + 100)
+  await page.evaluate(() => {
+    history.pushState({}, '', new URL('/site/feed', location.href))
+  })
+  expect(await serviceWorker.evaluate(() => (self as any).__pwTestState_redirectCount)).toBe(2)
 
   await page.close()
 })

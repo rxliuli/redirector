@@ -1,3 +1,4 @@
+import { DEDUPE_WINDOW_MS } from '$lib/misc'
 import { getRedirectUrl, store } from '$lib/redirect'
 import {
   migrateRulesStorage,
@@ -106,6 +107,25 @@ export default defineBackground(() => {
     return entry.count >= LOOP_THRESHOLD
   }
 
+  // Detect duplicate redirects caused by handling multiple event types for the
+  // same URL. This prevents an external app from being opened multiple times
+  const recentRedirects = new Map<string, number>()
+
+  function isDuplicateRedirect(tabId: number, url: string, redirectUrl: string): boolean {
+    const now = Date.now()
+    recentRedirects.forEach((entry, oldKey) => {
+      if (now - entry > DEDUPE_WINDOW_MS) {
+        recentRedirects.delete(oldKey)
+      }
+    })
+    const key = `${tabId}|${url}|${redirectUrl}`
+    if (recentRedirects.has(key)) {
+      return true
+    }
+    recentRedirects.set(key, now)
+    return false
+  }
+
   function handleRedirect(
     details: { tabId: number; url?: string; frameId?: number },
     source?: string,
@@ -143,6 +163,12 @@ export default defineBackground(() => {
     if (isLoopingRedirect(details.tabId, details.url)) {
       console.warn(
         `[handleRedirect] redirect-loop detected (tab=${details.tabId}, url=${details.url}, source=${source}) — suppressing redirect to ${redirectUrl}`,
+      )
+      return {}
+    }
+    if (isDuplicateRedirect(details.tabId, details.url, redirectUrl)) {
+      console.log(
+        `[handleRedirect] duplicate redirect detected (tab=${details.tabId}, url=${details.url}, source=${source}) — suppressing redirect to ${redirectUrl}`,
       )
       return {}
     }
