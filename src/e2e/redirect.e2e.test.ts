@@ -4,6 +4,7 @@ import { Hono } from 'hono'
 import type { StoredMatchRule } from '$lib/storage'
 import type { MatchRule } from '$lib/url'
 import { test, expect, type BrowserTestContext } from './fixtures'
+import { DEDUPE_WINDOW_MS } from '$lib/misc'
 
 // Test regex capture group redirect with query params (local server, no external dependency)
 test('redirect with regex capture groups on query params', async ({
@@ -1152,19 +1153,13 @@ test('deduplicate redirects via page open', async ({
     })
   }, testServer.url)
 
-  const finalRedirectCount = serviceWorker.evaluate(() => {
-    let redirectCounter = 0
+  await serviceWorker.evaluate(() => {
+    (self as any).__pwTestState_redirectCount = 0
     const origUpdate = chrome.tabs.update
     chrome.tabs.update = function(this: typeof chrome.tabs, ...args: Parameters<typeof chrome.tabs.update>): void {
-      redirectCounter++
+      (self as any).__pwTestState_redirectCount++
       origUpdate.apply(this, args)
     } as typeof chrome.tabs.update
-
-    return new Promise<number>((resolve) => {
-      setTimeout(() => {
-        resolve(redirectCounter)
-      }, 2000)
-    })
   })
 
   await context.pages()[0]!.waitForTimeout(500)
@@ -1175,16 +1170,15 @@ test('deduplicate redirects via page open', async ({
       timeout: 500,
     })
     .catch(() => {})
-  await page.waitForTimeout(1000)
-  expect(await finalRedirectCount).toBe(1)
+  expect(await serviceWorker.evaluate(() => (self as any).__pwTestState_redirectCount)).toBe(1)
 
   await page.close()
 })
 
-// Test whether redirects are deduplicated when triggered by SPA routing. Used
-// for preventing duplicate external application opens via custom protocol
-// handlers
-test('deduplicate redirects via history.pushState', async ({
+// Test whether you can intentionally open an external app sequentially, despite
+// deduplication logic, via history.pushState. This test exists to prevent
+// over-active redirect deduplication implementations
+test('allow duplicate intentional redirects via history.pushState', async ({
   serviceWorker,
   context,
   testServer,
@@ -1201,19 +1195,13 @@ test('deduplicate redirects via history.pushState', async ({
     })
   }, testServer.url)
 
-  const finalRedirectCount = serviceWorker.evaluate(() => {
-    let redirectCounter = 0
+  await serviceWorker.evaluate(() => {
+    (self as any).__pwTestState_redirectCount = 0
     const origUpdate = chrome.tabs.update
     chrome.tabs.update = function(this: typeof chrome.tabs, ...args: Parameters<typeof chrome.tabs.update>): void {
-      redirectCounter++
+      (self as any).__pwTestState_redirectCount++
       origUpdate.apply(this, args)
     } as typeof chrome.tabs.update
-
-    return new Promise<number>((resolve) => {
-      setTimeout(() => {
-        resolve(redirectCounter)
-      }, 2000)
-    })
   })
 
   await context.pages()[0]!.waitForTimeout(500)
@@ -1227,8 +1215,15 @@ test('deduplicate redirects via history.pushState', async ({
   await page.evaluate(() => {
     history.pushState({}, '', new URL('/site/feed', location.href))
   })
-  await page.waitForTimeout(1000)
-  expect(await finalRedirectCount).toBe(1)
+  expect(await serviceWorker.evaluate(() => (self as any).__pwTestState_redirectCount)).toBe(1)
+  await page.evaluate(() => {
+    history.pushState({}, '', new URL('/site/page', location.href))
+  })
+  await page.waitForTimeout(DEDUPE_WINDOW_MS + 100)
+  await page.evaluate(() => {
+    history.pushState({}, '', new URL('/site/feed', location.href))
+  })
+  expect(await serviceWorker.evaluate(() => (self as any).__pwTestState_redirectCount)).toBe(2)
 
   await page.close()
 })

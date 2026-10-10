@@ -1,3 +1,4 @@
+import { DEDUPE_WINDOW_MS } from '$lib/misc'
 import { getRedirectUrl, store } from '$lib/redirect'
 import {
   migrateRulesStorage,
@@ -108,7 +109,6 @@ export default defineBackground(() => {
 
   // Detect duplicate redirects caused by handling multiple event types for the
   // same URL. This prevents an external app from being opened multiple times
-  const DEDUPE_WINDOW_MS = 100
   const recentRedirects = new Map<string, number>()
 
   function isDuplicateRedirect(tabId: number, url: string, redirectUrl: string): boolean {
