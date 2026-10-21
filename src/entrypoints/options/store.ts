@@ -7,6 +7,7 @@ import {
 	writeRulesStorageMode,
 	writeRulesToMode,
 } from "$lib/storage";
+import { insertAt, moveItem } from "$lib/misc";
 import type { MatchRule } from "$lib/url";
 import { useEffect, useSyncExternalStore } from "react";
 
@@ -106,9 +107,26 @@ export const rules = {
 	},
 };
 
-export async function addRule(rule: MatchRule): Promise<void> {
+// `position` is the 0-based index the new rule should land at once inserted
+// (i.e. counted among the existing rules, before insertion). Defaults to 0,
+// preserving the historical head-insert behavior. Out-of-range values are
+// clamped by `insertAt`.
+export async function addRule(rule: MatchRule, position = 0): Promise<void> {
 	await ensureInitialized();
-	const normalized = await persistRules([rule, ...rulesState.get()]);
+	const next = insertAt(rulesState.get(), position, rule);
+	const normalized = await persistRules(next);
+	rulesState.set(normalized);
+}
+
+// Moves the rule at `fromIndex` to `toIndex`, shifting the rules in between
+// by one slot (not a swap). Both indexes are clamped into range.
+export async function moveRule(
+	fromIndex: number,
+	toIndex: number,
+): Promise<void> {
+	await ensureInitialized();
+	const next = moveItem(rulesState.get(), fromIndex, toIndex);
+	const normalized = await persistRules(next);
 	rulesState.set(normalized);
 }
 

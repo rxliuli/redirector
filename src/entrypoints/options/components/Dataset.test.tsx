@@ -307,7 +307,7 @@ describe('Action', () => {
     await expect.element(screen.getByTitle('Save')).not.toBeInTheDocument()
     await expect.element(screen.getByTitle('Cancel')).not.toBeInTheDocument()
   })
-  it('move rule down', async () => {
+  it('renders a 1-based position index for every rule', async () => {
     const rule: MatchRule = {
       mode: 'regex',
       from: 'https://example.com/from-1',
@@ -320,23 +320,33 @@ describe('Action', () => {
     }
     rules.set([rule, rule2])
     const screen = await render(<Dataset onAddRule={() => {}} />)
-    await expect.element(screen.getByTitle('Move up').nth(0)).toBeDisabled()
-    await expect.element(screen.getByTitle('Move down').nth(0)).toBeEnabled()
-    await expect.element(screen.getByTitle('Move up').nth(1)).toBeEnabled()
-    await expect.element(screen.getByTitle('Move down').nth(1)).toBeDisabled()
-    expect(
-      screen
-        .getByText('https://example.com/from')
-        .elements()
-        .map((it) => it.textContent),
-    ).toEqual(['https://example.com/from-1', 'https://example.com/from-2'])
-    await screen.getByTitle('Move down').nth(0).click()
-    expect(
-      screen
-        .getByText('https://example.com/from')
-        .elements()
-        .map((it) => it.textContent),
-    ).toEqual(['https://example.com/from-2', 'https://example.com/from-1'])
+    const rows = document.querySelectorAll('table > tbody > tr')
+    expect([...rows].map((row) => row.querySelector('td')?.textContent)).toEqual([
+      '1',
+      '2',
+    ])
+  })
+  it('moves a rule via the Position field in the edit dialog', async () => {
+    const rule: MatchRule = {
+      mode: 'regex',
+      from: 'https://example.com/from-1',
+      to: 'https://example.com/new-1',
+    }
+    const rule2: MatchRule = {
+      mode: 'regex',
+      from: 'https://example.com/from-2',
+      to: 'https://example.com/new-2',
+    }
+    rules.set([rule, rule2])
+    const screen = await render(<Dataset onAddRule={() => {}} />)
+    await screen.getByTitle('Edit').nth(0).click()
+    await screen.getByTitle('Expand advanced options').click()
+    await screen.getByTitle('Position').fill('2')
+    await screen.getByTitle('Save').click()
+    expect(rules.get().map((r) => r.from)).toEqual([
+      'https://example.com/from-2',
+      'https://example.com/from-1',
+    ])
   })
 }, 5000)
 

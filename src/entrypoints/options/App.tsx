@@ -15,9 +15,13 @@ export default function App() {
 	const allRules = useRules();
 	const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-	async function handleSaveNewRule(rule: MatchRule) {
+	async function handleSaveNewRule(
+		rule: MatchRule,
+		_index?: number,
+		position?: number,
+	) {
 		try {
-			await addRule(rule);
+			await addRule(rule, position);
 			toast.success("Rule added");
 			return;
 		} catch (error) {

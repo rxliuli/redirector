@@ -1,10 +1,4 @@
-import {
-	ChevronDown,
-	ChevronUp,
-	EllipsisVertical,
-	SquarePenIcon,
-	TrashIcon,
-} from "lucide-react";
+import { EllipsisVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -31,6 +25,7 @@ import type { MatchRule } from "$lib/url";
 import { uniqBy } from "es-toolkit";
 import {
 	isStorageQuotaExceededError,
+	moveRule,
 	replaceRules,
 	rules,
 	setRulesStorageMode,
@@ -54,21 +49,6 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 	}>({ open: false });
 	const [switchingStorageMode, setSwitchingStorageMode] = useState(false);
 
-	function sortRules(upOrDown: "up" | "down", index: number) {
-		rules.update((list) => {
-			const target = upOrDown === "up" ? index - 1 : index + 1;
-			const a = list[index];
-			const b = list[target];
-			if (a === undefined || b === undefined) {
-				return list;
-			}
-			const next = [...list];
-			next[index] = b;
-			next[target] = a;
-			return next;
-		});
-	}
-
 	function setRuleDisabled(index: number, disabled: boolean) {
 		rules.update((list) =>
 			list.map((r, i) =>
@@ -89,12 +69,15 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 		});
 	}
 
-	async function handleSave(rule: MatchRule, index?: number) {
+	async function handleSave(rule: MatchRule, index?: number, position?: number) {
 		if (index !== undefined) {
 			const nextRules = [...allRules];
 			nextRules[index] = rule;
 			try {
 				await replaceRules(nextRules);
+				if (position !== undefined && position !== index) {
+					await moveRule(index, position);
+				}
 				toast.success("Rule updated");
 			} catch (error) {
 				if (isStorageQuotaExceededError(error)) {
@@ -260,15 +243,19 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 			<Table className="min-w-xl w-full table-fixed">
 				<TableHeader>
 					<TableRow>
+						<TableHead className="w-10 text-muted-foreground">#</TableHead>
 						<TableHead className="w-24">Mode</TableHead>
 						<TableHead className="w-16">Enabled</TableHead>
 						<TableHead>Rule</TableHead>
-						<TableHead className="w-32 text-right">Action</TableHead>
+						<TableHead className="w-20 text-right">Action</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
 					{allRules.map((rule, index) => (
 						<TableRow key={index}>
+							<TableCell className="text-muted-foreground text-xs">
+								{index + 1}
+							</TableCell>
 							<TableCell>
 								{rule.mode === "regex"
 									? "Regex"
@@ -305,32 +292,6 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 								</div>
 							</TableCell>
 							<TableCell className="flex justify-end gap-1">
-								<div className="flex flex-col">
-									<Button
-										className="h-4.5 w-9 rounded-b-none"
-										disabled={!index}
-										onClick={() => {
-											sortRules("up", index);
-										}}
-										variant="default"
-										size="icon"
-										title="Move up"
-									>
-										<ChevronUp className="h-4 w-4" />
-									</Button>
-									<Button
-										className="h-4.5 w-9 rounded-t-none border-t-0"
-										disabled={index === allRules.length - 1}
-										onClick={() => {
-											sortRules("down", index);
-										}}
-										variant="default"
-										size="icon"
-										title="Move down"
-									>
-										<ChevronDown className="h-4 w-4" />
-									</Button>
-								</div>
 								<Button
 									variant="default"
 									size="icon"
@@ -355,6 +316,7 @@ export default function Dataset({ onAddRule }: DatasetProps) {
 
 			{editDialog.open && (
 				<RuleDialog
+					key={editDialog.index}
 					open={editDialog.open}
 					rule={editDialog.rule}
 					index={editDialog.index}
