@@ -38,7 +38,7 @@ That's the basic idea: **match a URL, capture the parts you need, and build a ne
 ## Managing Rules
 
 - **Enable / Disable** — Toggle individual rules on or off without deleting them
-- **Reorder** — Rules are checked from top to bottom; drag to change priority
+- **Reorder** — Rules are checked from top to bottom; set a rule's Position in the dialog's Advanced section to move it
 - **Exclude Pattern** — Optionally set a pattern per rule; URLs matching it are never redirected by that rule
 - **Test** — Paste any URL in the Test URL field to see which rule matches and where it redirects
 - **Import / Export** — Back up your rules as a JSON file, or share them with others
