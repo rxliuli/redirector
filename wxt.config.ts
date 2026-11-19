@@ -25,7 +25,9 @@ export default defineConfig({
   },
   manifest: (env) => {
     const manifest: UserManifest = {
-      name: 'Redirector',
+      name: 'Redirector: Auto URL Redirect & Regex Rules',
+      description:
+        'Auto-redirect URLs with regex or URL Pattern rules. Use Old Reddit, skip tracking links, test rules live & sync across devices.',
       permissions: ['storage', 'webRequest', 'webNavigation'],
       host_permissions: ['<all_urls>'],
       action: {
