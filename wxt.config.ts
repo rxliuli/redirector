@@ -58,6 +58,8 @@ export default defineConfig({
     }
     if (env.browser === 'safari') {
       manifest.name = 'URL Redirector'
+      manifest.description =
+        'Auto-redirect URLs with regex or URL Pattern rules. Use Old Reddit, skip tracking links, and sync rules.'
       // TODO: https://developer.apple.com/forums/thread/735111
       manifest.permissions = manifest.permissions!.filter(
         (permission) => permission !== 'webRequest',
