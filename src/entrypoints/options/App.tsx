@@ -7,6 +7,7 @@ import { Button } from "$lib/components/ui/button";
 import { useApplySystemTheme } from "$lib/hooks/use-theme";
 import type { MatchRule } from "$lib/url";
 import Dataset from "./components/Dataset";
+import ReviewPrompt from "./components/ReviewPrompt";
 import RuleDialog from "./components/RuleDialog";
 import { addRule, isStorageQuotaExceededError, useRules } from "./store";
 
@@ -70,6 +71,7 @@ export default function App() {
 						</a>
 					</div>
 				</div>
+				<ReviewPrompt />
 				<div>
 					<Dataset onAddRule={() => setAddDialogOpen(true)} />
 				</div>

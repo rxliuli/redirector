@@ -1,5 +1,6 @@
 import { DEDUPE_WINDOW_MS } from '$lib/misc'
 import { getRedirectUrl, store } from '$lib/redirect'
+import { ensureReviewInstallTime, recordRedirectSuccess } from '$lib/review'
 import {
   migrateRulesStorage,
   normalizeRules,
@@ -57,6 +58,7 @@ export default defineBackground(() => {
   // Deliberately not on 'update' — a mid-session extension update must not
   // suddenly redirect tabs the user is sitting on.
   browser.runtime.onInstalled.addListener((details) => {
+    void ensureReviewInstallTime()
     if (details.reason === 'install') sweepOpenTabs()
   })
 
@@ -178,6 +180,7 @@ export default defineBackground(() => {
     // Save original URL before redirecting
     tabOriginalUrls.set(details.tabId, details.url)
     browser.tabs.update(details.tabId, { url: redirectUrl })
+    void recordRedirectSuccess()
     return { redirectUrl }
   }
 
